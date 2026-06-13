@@ -3,108 +3,351 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Hotel Booking App{% endblock title %}</title>
+    <title>{% block title %}Hotel Booking{% endblock title %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      * {
-        margin: 0px;
-        padding: 0px;
+      *, *::before, *::after {
+        margin: 0;
+        padding: 0;
         box-sizing: border-box;
       }
-      body {
-        background-color: #f4f4f4;
-        font-family: "Times New Roman", Times, serif;
+
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --primary: #0f172a;
+        --accent: #3b82f6;
+        --accent-soft: #eff6ff;
+        --text: #1e293b;
+        --text-muted: #94a3b8;
+        --border: #e2e8f0;
+        --radius: 12px;
+        --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
       }
 
-      .nav-bar {
+      body {
+        font-family: 'Inter', -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 30px;
+        flex-direction: column;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
       }
+
+      a { color: inherit; text-decoration: none; }
+      button { font-family: inherit; cursor: pointer; }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      /* Nav */
+      nav {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      nav .container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 64px;
+      }
+
+      .logo {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: -0.3px;
+      }
+
+      .logo span { color: var(--accent); }
 
       .nav-links {
         display: flex;
         align-items: center;
-        gap: 40px;
-      }
-
-      .nav-links ul {
-        display: flex;
+        gap: 4px;
         list-style: none;
-        gap: 40px;
       }
 
       .nav-links a {
-        text-decoration: none;
-        color: #333;
-        font-size: 16px;
-      }
-
-      .nav-links .logo-link {
-        font-size: 25px;
-        font-weight: bold;
-        color: #000;
-      }
-
-      .nav-links a:hover {
-        color: #007bff;
-      }
-
-      .nav-bar button {
-        margin-left: 10px;
         padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-muted);
+        transition: all 0.2s;
       }
 
-      .footer-container {
-        padding: 40px 30px;
+      .nav-links a:hover { color: var(--text); background: var(--bg); }
+      .nav-links a.active { color: var(--accent); background: var(--accent-soft); }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        transition: all 0.2s;
+        text-decoration: none;
         text-align: center;
       }
 
-      .footer-container p {
-        color: #666;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        line-height: 1.5;
+      .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
       }
+
+      .btn-primary:hover { opacity: 0.9; color: #fff; }
+
+      .hamburger {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        background: none;
+        border: none;
+        padding: 4px;
+      }
+
+      .hamburger span {
+        display: block;
+        width: 22px;
+        height: 2px;
+        background: var(--text);
+        border-radius: 2px;
+        transition: all 0.2s;
+      }
+
+      .hamburger.active span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+      .hamburger.active span:nth-child(2) { opacity: 0; }
+      .hamburger.active span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+      .mobile-menu {
+        display: none;
+        padding: 16px 24px 24px;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      .mobile-menu.open { display: block; }
+
+      .mobile-menu a {
+        display: block;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text-muted);
+        transition: all 0.2s;
+      }
+
+      .mobile-menu a:hover { color: var(--text); background: var(--bg); }
+
+      .mobile-menu .nav-actions {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+
+      .mobile-menu .btn { flex: 1; text-align: center; }
+
+      .user-badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text);
+      }
+
+      .user-badge .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--accent-soft);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .btn-logout {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-muted);
+        transition: all 0.2s;
+        text-decoration: none;
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      .btn-logout:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+      }
+
+      /* Main */
+      main { flex: 1; padding: 48px 0; }
+
+      /* Footer */
+      footer {
+        background: var(--primary);
+        color: rgba(255,255,255,0.5);
+        padding: 24px 0;
+        font-size: 13px;
+      }
+
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .footer-inner a {
+        color: rgba(255,255,255,0.4);
+        transition: color 0.2s;
+      }
+
+      .footer-inner a:hover { color: var(--accent); }
+
+      .footer-links { display: flex; gap: 24px; }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .nav-links, nav .nav-actions { display: none; }
+        .hamburger { display: flex; }
+        main { padding: 32px 0; }
+      }
+
+      @media (max-width: 480px) {
+        .footer-inner { flex-direction: column; text-align: center; }
+      }
+
+      {% block extra_styles %}{% endblock extra_styles %}
     </style>
   </head>
+
   <body>
-    <main>
-      {% block content %}
-      <div class="head-container">
-        <div class="nav-bar">
-          <nav class="nav-links">
-            <ul>
-              <li>
-                <a class="logo-link" href="#">Hotel.</a>
-              </li>
-            </ul>
-            <ul>
-              <li><a href="#">Home</a></li>
-              <li><a href="#">Booking</a></li>
-              <li><a href="#">Blog</a></li>
-              <li><a href="#">Contact us</a></li>
-            </ul>
-          </nav>
-          <div class="auth-buttons">
-            <button style="background: none; color: #333">Log in</button>
-            <button style="background: #007bff; color: white">Sign up</button>
-          </div>
+    <nav>
+      <div class="container">
+        <a href="{% url 'home' %}" class="logo">Hotel<span>.</span></a>
+
+        <ul class="nav-links">
+          <li><a href="{% url 'home' %}" class="active">Home</a></li>
+          <li><a href="#">Booking</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+
+        <div class="nav-actions">
+          {% if user.is_authenticated %}
+            <div class="user-badge">
+              <span class="avatar">{{ user.username|first|upper }}</span>
+              <span>{{ user.username }}</span>
+            </div>
+            <form action="{% url 'logout' %}" method="post" style="display:inline">
+              {% csrf_token %}
+              <button type="submit" class="btn-logout">Log out</button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn">Log in</a>
+            <a href="{% url 'signup' %}" class="btn btn-primary">Sign up</a>
+          {% endif %}
         </div>
-        <div class="footer-container">
-          <div class="footer">
-            <p>
-              Trusted by individuals and teams at the worlds <br />
-              best companies
-            </p>
+
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <div class="mobile-menu" id="mobileMenu">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="#">Booking</a>
+        <a href="#">Blog</a>
+        <a href="#">Contact</a>
+        <div class="nav-actions">
+          {% if user.is_authenticated %}
+            <div class="user-badge" style="justify-content:center;padding:12px 16px;">
+              <span class="avatar">{{ user.username|first|upper }}</span>
+              <span>{{ user.username }}</span>
+            </div>
+            <form action="{% url 'logout' %}" method="post" style="width:100%">
+              {% csrf_token %}
+              <button type="submit" class="btn-logout" style="width:100%;text-align:center">Log out</button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn">Log in</a>
+            <a href="{% url 'signup' %}" class="btn btn-primary">Sign up</a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <main>{% block content %}{% endblock content %}</main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-inner">
+          <p>&copy; 2025 Hotel. All rights reserved.</p>
+          <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Cookies</a>
           </div>
         </div>
       </div>
-      {% endblock content %}
-    </main>
+    </footer>
+
+    <script>
+      const hamburger = document.getElementById("hamburger");
+      const mobileMenu = document.getElementById("mobileMenu");
+
+      hamburger.addEventListener("click", () => {
+        hamburger.classList.toggle("active");
+        mobileMenu.classList.toggle("open");
+      });
+
+      // Active link
+      document.querySelectorAll(".nav-links a").forEach((link) => {
+        link.addEventListener("click", function () {
+          document.querySelectorAll(".nav-links a").forEach((l) => l.classList.remove("active"));
+          this.classList.add("active");
+        });
+      });
+    </script>
+
+    {% block extra_scripts %}{% endblock extra_scripts %}
   </body>
 </html>

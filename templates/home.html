@@ -1,1 +1,336 @@
 {% extends "base.html" %}
+
+{% block title %}Hotel Booking — Find Your Perfect Stay{% endblock title %}
+
+{% block content %}
+<style>
+  .hero {
+    text-align: center;
+    padding: 80px 0 60px;
+  }
+
+  .hero h1 {
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero p {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 520px;
+    margin: 0 auto 36px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: var(--shadow);
+  }
+
+  .search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    background: transparent;
+  }
+
+  .search-box input::placeholder { color: var(--text-muted); }
+
+  .search-box button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+
+  .search-box button:hover { opacity: 0.9; }
+
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    margin-top: 48px;
+  }
+
+  .stats-item { text-align: center; }
+
+  .stats-item strong {
+    display: block;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .stats-item span {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .section-sub {
+    font-size: 15px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+  }
+
+  .hotel-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .hotel-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+
+  .hotel-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+
+  .hotel-img {
+    height: 180px;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .hotel-body { padding: 20px; }
+
+  .hotel-body h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+
+  .hotel-body .location {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .hotel-body .price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .hotel-body .price span {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 8px;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: box-shadow 0.2s;
+  }
+
+  .feature-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+
+  .feature-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  .feature-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 6px;
+  }
+
+  .feature-card p {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .cta-section {
+    background: var(--primary);
+    border-radius: var(--radius);
+    padding: 56px;
+    text-align: center;
+    color: #fff;
+    margin-top: 8px;
+  }
+
+  .cta-section h2 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+
+  .cta-section p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 28px;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cta-section .btn-primary {
+    background: var(--accent);
+    font-size: 15px;
+    padding: 12px 36px;
+  }
+
+  .cta-section .btn-primary:hover { opacity: 0.9; color: #fff; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 32px; }
+    .hero { padding: 48px 0 36px; }
+    .stats { gap: 24px; }
+    .stats-item strong { font-size: 22px; }
+    .hotel-grid, .features { grid-template-columns: 1fr; }
+    .cta-section { padding: 36px 24px; }
+    .cta-section h2 { font-size: 24px; }
+    .search-box { flex-direction: column; gap: 8px; padding: 12px; }
+    .search-box input { width: 100%; text-align: center; }
+    .search-box button { width: 100%; }
+  }
+</style>
+
+<section class="hero">
+  {% if user.is_authenticated %}
+    <p style="color:var(--accent);font-weight:600;font-size:15px;margin-bottom:8px;">Welcome back, {{ user.username }}!</p>
+  {% endif %}
+  <h1>Find your perfect<br><span>stay</span>, anywhere.</h1>
+  <p>Search thousands of hotels, resorts, and homes at the best prices.</p>
+
+  <form class="search-box">
+    <input type="text" placeholder="Search destinations, hotels..." />
+    <button type="submit">Search</button>
+  </form>
+
+  <div class="stats">
+    <div class="stats-item">
+      <strong>12K+</strong>
+      <span>Hotels</span>
+    </div>
+    <div class="stats-item">
+      <strong>8K+</strong>
+      <span>Cities</span>
+    </div>
+    <div class="stats-item">
+      <strong>2M+</strong>
+      <span>Guests</span>
+    </div>
+  </div>
+</section>
+
+<section class="container" style="margin-bottom: 64px;">
+  <h2 class="section-title">Popular hotels</h2>
+  <p class="section-sub">Hand-picked stays loved by travellers.</p>
+
+  <div class="hotel-grid">
+    <div class="hotel-card">
+      <div class="hotel-img" style="background-image:url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80')"></div>
+      <div class="hotel-body">
+        <h3>The Grand Palace</h3>
+        <p class="location">London, UK</p>
+        <p class="price">$240 <span>/ night</span></p>
+      </div>
+    </div>
+
+    <div class="hotel-card">
+      <div class="hotel-img" style="background-image:url('https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600&q=80')"></div>
+      <div class="hotel-body">
+        <h3>Seaside Resort</h3>
+        <p class="location">Bali, Indonesia</p>
+        <p class="price">$180 <span>/ night</span></p>
+      </div>
+    </div>
+
+    <div class="hotel-card">
+      <div class="hotel-img" style="background-image:url('https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&q=80')"></div>
+      <div class="hotel-body">
+        <h3>Mountain Lodge</h3>
+        <p class="location">Zermatt, Switzerland</p>
+        <p class="price">$320 <span>/ night</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container" style="margin-bottom: 64px;">
+  <h2 class="section-title">Why choose us</h2>
+  <p class="section-sub">Everything you need for a seamless booking experience.</p>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">&#10003;</div>
+      <h3>Best price guarantee</h3>
+      <p>We match any lower price you find. Book with confidence, knowing you're getting the best deal.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">&#128276;</div>
+      <h3>24/7 support</h3>
+      <p>Our team is here around the clock to help with bookings, changes, or any questions you have.</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">&#128274;</div>
+      <h3>Free cancellation</h3>
+      <p>Plans change. Cancel for free up to 48 hours before check-in on most bookings.</p>
+    </div>
+  </div>
+</section>
+
+<section class="container" style="margin-bottom: 64px;">
+  <div class="cta-section">
+    <h2>Ready to book your stay?</h2>
+    <p>Join millions of travellers who trust us for their hotel bookings.</p>
+    <a href="{% url 'signup' %}" class="btn btn-primary">Get started</a>
+  </div>
+</section>
+{% endblock content %}

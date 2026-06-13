@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up — Hotel Booking{% endblock title %}
+
+{% block content %}
+<style>
+  .auth-card {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 40px 0;
+  }
+
+  .auth-card h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+
+  .auth-card .sub {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  .auth-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--accent);
+  }
+
+  .helptext {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .errorlist {
+    list-style: none;
+    color: #ef4444;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  .auth-form .btn {
+    width: 100%;
+    padding: 11px;
+    font-size: 15px;
+    margin-top: 4px;
+  }
+
+  .auth-form .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .auth-form .btn-primary:hover {
+    opacity: 0.9;
+    color: #fff;
+  }
+
+  .auth-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .auth-footer a {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .auth-footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="auth-card">
+  <h1>Create an account</h1>
+  <p class="sub">Sign up to start booking hotels.</p>
+
+  <form class="auth-form" method="post">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div class="form-group">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+          <span class="helptext">{{ field.help_text }}</span>
+        {% endif %}
+        {% if field.errors %}
+          <ul class="errorlist">
+            {% for error in field.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Sign up</button>
+  </form>
+
+  <p class="auth-footer">
+    Already have an account? <a href="{% url 'login' %}">Log in</a>
+  </p>
+</div>
+{% endblock content %}
