@@ -32,6 +32,13 @@ A Django-based hotel booking platform with user authentication, role-based acces
 - Paginated grid view (9 per page) with search/filter bar
 - Role-gated: only `owner` users can manage hotels
 
+### Room Listings
+- Browse rooms at `/rooms/` with search by room number or hotel name, filter by room type
+- Full CRUD: create, detail, update, and delete — owner-only for create/edit/delete
+- Paginated grid view (12 per page) with search/filter bar
+- Room model: hotel (FK), room number, type (single/double/deluxe/suite/family), description, price per night, capacity, total/available rooms, image
+- Linked from hotel detail page (shows up to 3 rooms per hotel)
+
 ## Project Structure
 
 ```
@@ -39,6 +46,8 @@ hotel_booking/
 ├── accounts/              # Auth app (models, views, forms, urls, signals)
 ├── hotels/                # Hotels app (models, views, admin, urls)
 │   └── templates/hotels/  # App-level templates (list, detail, form, confirm delete)
+├── rooms/                 # Rooms app (models, views, admin, urls)
+│   └── templates/rooms/   # App-level templates (list, detail, form, confirm delete)
 ├── pages/                 # Pages app (home page)
 ├── django_project/        # Project settings, root URL config
 ├── templates/             # Project-level templates
@@ -79,6 +88,7 @@ python manage.py test                   # Run all tests (36 tests)
 python manage.py test accounts          # Accounts app tests
 python manage.py test pages             # Pages app tests
 python manage.py test hotels            # Hotels app tests
+python manage.py test rooms             # Rooms app tests
 python manage.py makemigrations         # Create migrations after model changes
 python manage.py migrate                # Apply migrations
 python manage.py createsuperuser        # Create admin user
@@ -111,6 +121,16 @@ python manage.py createsuperuser        # Create admin user
 | `/hotels/<id>/edit/` | HotelUpdateView | `hotels/hotel_form.html` |
 | `/hotels/<id>/delete/` | HotelDeleteView | `hotels/hotel_confirm_delete.html` |
 
+### Rooms
+
+| URL | View | Template |
+|-----|------|----------|
+| `/rooms/` | RoomListView | `rooms/room_list.html` |
+| `/rooms/<id>/` | RoomDetailView | `rooms/room_detail.html` |
+| `/rooms/create/` | RoomCreateView | `rooms/room_form.html` |
+| `/rooms/<id>/edit/` | RoomUpdateView | `rooms/room_form.html` |
+| `/rooms/<id>/delete/` | RoomDeleteView | `rooms/room_confirm_delete.html` |
+
 ## Models
 
 ### CustomUser (extends AbstractUser)
@@ -129,3 +149,13 @@ python manage.py createsuperuser        # Create admin user
 - `phone_number`, `email` — both optional (blank)
 - `image` — ImageField (uploaded to `hotels/`, nullable)
 - `is_active`, `created_at`, `updated_at`
+
+### Room
+- `hotel` — FK to Hotel (related_name `rooms`)
+- `room_number`, `room_type` (single/double/deluxe/suite/family)
+- `description` — optional
+- `price_per_night` — Decimal
+- `capacity` — guests (default 1)
+- `total_rooms`, `available_rooms` — counts (default 1)
+- `image` — ImageField (uploaded to `rooms/`, nullable)
+- `is_available`, `created_at`, `updated_at`
