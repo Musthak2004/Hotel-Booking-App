@@ -24,6 +24,7 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("", include("pages.urls")),
     path("hotels/", include("hotels.urls")),
+    path("rooms/", include("rooms.urls")),
 ]
 
 if settings.DEBUG:
