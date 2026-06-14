@@ -133,6 +133,17 @@
     <p>Fill in the details below to reserve your stay.</p>
   </div>
 
+  {% if selected_room %}
+  <div class="price-preview reveal" style="background:var(--accent-soft);border:1px solid var(--accent-light);border-radius:8px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <div>
+      <div style="font-size:13px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Selected Room</div>
+      <div style="font-weight:600;color:var(--text);">{{ selected_room.hotel.name }} — Room {{ selected_room.room_number }}</div>
+      <div style="font-size:13px;color:var(--text-muted);">{{ selected_room.get_room_type_display }} &middot; Up to {{ selected_room.capacity }} guests</div>
+    </div>
+    <div class="amount" style="font-size:20px;font-weight:700;color:var(--accent);">${{ selected_room.price_per_night }} <span style="font-size:14px;font-weight:400;color:var(--text-muted);">/ night</span></div>
+  </div>
+  {% endif %}
+
   <div class="form-card reveal">
     <form method="post">
       {% csrf_token %}

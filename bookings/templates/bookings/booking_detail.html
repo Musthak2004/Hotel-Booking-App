@@ -215,11 +215,8 @@
       <div class="price-display">
         <div class="amount">${{ booking.total_price }}</div>
         <div class="period">total</div>
-        {% with days=booking.check_out|timeuntil:booking.check_in %}
-        {% endwith %}
         <div class="breakdown">
           ${{ booking.room.price_per_night }} &times;
-          {% widthratio booking.check_out|timeuntil:booking.check_in|cut:" "|cut:"," 1 1 as days %}
           {{ booking.check_out|timeuntil:booking.check_in }}
         </div>
       </div>

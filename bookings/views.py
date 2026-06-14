@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 
 from django.views.generic import (
@@ -11,6 +12,7 @@ from django.views.generic import (
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from rooms.models import Room
 from .models import Booking
 from .forms import BookingForm
 
@@ -30,6 +32,25 @@ class BookingCreateView(
     success_url = reverse_lazy(
         "bookings:booking_list"
     )
+
+    def get_initial(self):
+        initial = super().get_initial()
+        room_id = self.request.GET.get("room")
+        if room_id:
+            try:
+                room = Room.objects.get(pk=room_id)
+                initial["room"] = room
+            except Room.DoesNotExist:
+                pass
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        room_id = self.request.GET.get("room")
+        if room_id:
+            room = get_object_or_404(Room, pk=room_id)
+            context["selected_room"] = room
+        return context
 
     def form_valid(self, form):
 

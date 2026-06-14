@@ -278,6 +278,10 @@
     </div>
   </div>
 
+  <div style="text-align:center;margin-top:32px;" class="reveal">
+    <a href="{% url 'bookings:booking_create' %}?room={{ room.id }}" class="btn btn-primary" style="padding:14px 48px;font-size:16px;">&#128197; Book This Room</a>
+  </div>
+
   <div class="detail-meta-footer reveal">
     <span>Added {{ room.created_at|date:"M j, Y" }}</span>
     {% if room.updated_at != room.created_at %}
