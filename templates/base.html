@@ -412,7 +412,8 @@
 
         <ul class="nav-links">
           <li><a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %}">Home</a></li>
-          <li><a href="{% url 'hotels:hotel_list' %}" class="{% if 'hotels' in request.path %}active{% endif %}">Booking</a></li>
+          <li><a href="{% url 'hotels:hotel_list' %}" class="{% if '/hotels/' in request.path %}active{% endif %}">Hotels</a></li>
+          <li><a href="{% url 'rooms:room_list' %}" class="{% if '/rooms/' in request.path %}active{% endif %}">Rooms</a></li>
           <li><a href="#">Blog</a></li>
           <li><a href="#">Contact</a></li>
         </ul>
@@ -451,7 +452,8 @@
 
       <div class="mobile-menu" id="mobileMenu">
         <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'hotels:hotel_list' %}">Booking</a>
+        <a href="{% url 'hotels:hotel_list' %}">Hotels</a>
+        <a href="{% url 'rooms:room_list' %}">Rooms</a>
         <a href="#">Blog</a>
         <a href="#">Contact</a>
         <div class="nav-actions">
@@ -532,8 +534,10 @@
       (function setActiveLink() {
         const currentPath = location.pathname;
         document.querySelectorAll(".nav-links a, .mobile-menu a").forEach((link) => {
-          if (link.getAttribute("href") === currentPath) {
-            link.classList.add("active");
+          const href = link.getAttribute("href");
+          if (href && href !== "#" && currentPath.startsWith(href)) {
+            const active = href === "/" ? currentPath === "/" : true;
+            if (active) link.classList.add("active");
           } else {
             link.classList.remove("active");
           }

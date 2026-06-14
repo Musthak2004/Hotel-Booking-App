@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit Room {{ object.room_number }}{% else %}Add Room{% endif %} — Hotel Booking{% endblock title %}
+
+{% block extra_styles %}
+<style>
+  .form-page-header { margin-bottom: 32px; }
+
+  .form-page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+  }
+
+  .form-page-header p {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  .form-card {
+    max-width: 720px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    box-shadow: var(--shadow);
+  }
+
+  .form-card .field-group { margin-bottom: 24px; }
+
+  .form-card label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .form-card .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-card .form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+
+  .form-card textarea.form-control { resize: vertical; min-height: 100px; }
+
+  .form-card .helptext {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .form-card .errorlist {
+    list-style: none;
+    margin: 0 0 6px;
+    padding: 0;
+  }
+
+  .form-card .errorlist li {
+    font-size: 13px;
+    color: var(--error);
+    background: #fef2f2;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+  }
+
+  .form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .form-card { padding: 20px; }
+    .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
+  }
+
+  .form-check-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .form-check-group label { margin-bottom: 0; cursor: pointer; }
+
+  .form-check-input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .form-actions .btn { padding: 10px 28px; font-size: 15px; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border);
+  }
+
+  .btn-secondary:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .image-preview {
+    margin-top: 12px;
+    max-width: 240px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .image-preview img { width: 100%; height: auto; display: block; }
+
+  .current-image-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+</style>
+{% endblock extra_styles %}
+
+{% block content %}
+<div class="container">
+  <div class="form-page-header reveal">
+    <h1>{% if object %}Edit Room {{ object.room_number }}{% else %}Add a New Room{% endif %}</h1>
+    <p>{% if object %}Update the details of this room.{% else %}Fill in the details below to add a room to your hotel.{% endif %}</p>
+  </div>
+
+  <div class="form-card reveal">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="errorlist">
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="field-group">
+        <label for="{{ form.hotel.id_for_label }}">Hotel</label>
+        {{ form.hotel }}
+        {% if form.hotel.errors %}<ul class="errorlist">{% for e in form.hotel.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="form-row-2">
+        <div class="field-group">
+          <label for="{{ form.room_number.id_for_label }}">Room Number</label>
+          {{ form.room_number }}
+          {% if form.room_number.errors %}<ul class="errorlist">{% for e in form.room_number.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="field-group">
+          <label for="{{ form.room_type.id_for_label }}">Room Type</label>
+          {{ form.room_type }}
+          {% if form.room_type.errors %}<ul class="errorlist">{% for e in form.room_type.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.description.id_for_label }}">Description</label>
+        {{ form.description }}
+        {% if form.description.errors %}<ul class="errorlist">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="form-row-3">
+        <div class="field-group">
+          <label for="{{ form.price_per_night.id_for_label }}">Price per Night ($)</label>
+          {{ form.price_per_night }}
+          {% if form.price_per_night.errors %}<ul class="errorlist">{% for e in form.price_per_night.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="field-group">
+          <label for="{{ form.capacity.id_for_label }}">Capacity (guests)</label>
+          {{ form.capacity }}
+          {% if form.capacity.errors %}<ul class="errorlist">{% for e in form.capacity.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field-group">
+          <label for="{{ form.total_rooms.id_for_label }}">Total Rooms</label>
+          {{ form.total_rooms }}
+          {% if form.total_rooms.errors %}<ul class="errorlist">{% for e in form.total_rooms.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="field-group">
+          <label for="{{ form.available_rooms.id_for_label }}">Available Rooms</label>
+          {{ form.available_rooms }}
+          {% if form.available_rooms.errors %}<ul class="errorlist">{% for e in form.available_rooms.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.image.id_for_label }}">Room Image</label>
+        {{ form.image }}
+        {% if object and object.image %}
+        <div class="current-image-label">Current image:</div>
+        <div class="image-preview">
+          <img src="{{ object.image.url }}" alt="{{ object.room_number }}">
+        </div>
+        {% endif %}
+        {% if form.image.errors %}<ul class="errorlist">{% for e in form.image.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="field-group form-check-group">
+        {{ form.is_available }}
+        <label for="{{ form.is_available.id_for_label }}">Room is available for booking</label>
+        {% if form.is_available.errors %}<ul class="errorlist">{% for e in form.is_available.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{% if object %}Save Changes{% else %}Create Room{% endif %}</button>
+        <a href="{% url 'rooms:room_list' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content %}
