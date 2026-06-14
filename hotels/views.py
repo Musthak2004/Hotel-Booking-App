@@ -3,6 +3,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
+from reviews.models import Review
 from .models import Hotel
 from .forms import HotelForm
 
@@ -48,6 +49,15 @@ class HotelDetailView(DetailView):
     model = Hotel
     template_name = "hotels/hotel_detail.html"
     context_object_name = "hotel"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_authenticated:
+            context["user_review"] = Review.objects.filter(
+                hotel=self.object, user=user
+            ).first()
+        return context
 
 
 # CREATE (owner only)

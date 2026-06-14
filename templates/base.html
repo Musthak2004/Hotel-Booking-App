@@ -411,38 +411,61 @@
         <a href="{% url 'home' %}" class="logo">Hotel<span>.</span></a>
 
         <ul class="nav-links">
-          <li><a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %}">Home</a></li>
-          <li><a href="{% url 'hotels:hotel_list' %}" class="{% if '/hotels/' in request.path %}active{% endif %}">Hotels</a></li>
-          <li><a href="{% url 'rooms:room_list' %}" class="{% if '/rooms/' in request.path %}active{% endif %}">Rooms</a></li>
-          <li><a href="#">Blog</a></li>
+          <li>
+            <a
+              href="{% url 'home' %}"
+              class="{% if request.path == '/' %}active{% endif %}"
+              >Home</a
+            >
+          </li>
+          <li>
+            <a
+              href="{% url 'hotels:hotel_list' %}"
+              class="{% if '/hotels/' in request.path %}active{% endif %}"
+              >Hotels</a
+            >
+          </li>
+          <li>
+            <a
+              href="{% url 'rooms:room_list' %}"
+              class="{% if '/rooms/' in request.path %}active{% endif %}"
+              >Rooms</a
+            >
+          </li>
           <li><a href="#">Contact</a></li>
         </ul>
 
         <div class="nav-actions">
           {% if user.is_authenticated %}
-            <div class="user-menu" id="userMenu">
-              <div class="user-badge" id="userToggle">
-                <span class="avatar">{{ user.username|first|upper }}</span>
-                <span>{{ user.username }}</span>
-                <span class="chevron" id="chevron">&#9660;</span>
-              </div>
-              <div class="user-dropdown" id="userDropdown">
-                <div class="dropdown-header">
-                  <strong>{{ user.username }}</strong>
-                  <span>{{ user.email }}</span>
-                </div>
-                <a href="{% url 'bookings:booking_list' %}">&#128197; My Bookings</a>
-                <a href="{% url 'profile_update' %}">&#128100; Profile Update</a>
-                <a href="{% url 'password_change' %}">&#9881; Settings</a>
-                <form action="{% url 'logout' %}" method="post" style="display:flex">
-                  {% csrf_token %}
-                  <button type="submit" class="danger">&#10149; Log out</button>
-                </form>
-              </div>
+          <div class="user-menu" id="userMenu">
+            <div class="user-badge" id="userToggle">
+              <span class="avatar">{{ user.username|first|upper }}</span>
+              <span>{{ user.username }}</span>
+              <span class="chevron" id="chevron">&#9660;</span>
             </div>
+            <div class="user-dropdown" id="userDropdown">
+              <div class="dropdown-header">
+                <strong>{{ user.username }}</strong>
+                <span>{{ user.email }}</span>
+              </div>
+              <a href="{% url 'bookings:booking_list' %}"
+                >&#128197; My Bookings</a
+              >
+              <a href="{% url 'profile_update' %}">&#128100; Profile Update</a>
+              <a href="{% url 'password_change' %}">&#9881; Settings</a>
+              <form
+                action="{% url 'logout' %}"
+                method="post"
+                style="display: flex"
+              >
+                {% csrf_token %}
+                <button type="submit" class="danger">&#10149; Log out</button>
+              </form>
+            </div>
+          </div>
           {% else %}
-            <a href="{% url 'login' %}" class="btn">Log in</a>
-            <a href="{% url 'signup' %}" class="btn btn-primary">Sign up</a>
+          <a href="{% url 'login' %}" class="btn">Log in</a>
+          <a href="{% url 'signup' %}" class="btn btn-primary">Sign up</a>
           {% endif %}
         </div>
 
@@ -459,20 +482,44 @@
         <a href="#">Contact</a>
         <div class="nav-actions">
           {% if user.is_authenticated %}
-            <div class="user-badge" style="justify-content:center;padding:12px 16px;">
-              <span class="avatar">{{ user.username|first|upper }}</span>
-              <span>{{ user.username }}</span>
-            </div>
-            <a href="{% url 'bookings:booking_list' %}" class="btn" style="width:100%;justify-content:center;">&#128197; My Bookings</a>
-            <a href="{% url 'profile_update' %}" class="btn" style="width:100%;justify-content:center;">&#128100; Profile Update</a>
-            <a href="{% url 'password_change' %}" class="btn" style="width:100%;justify-content:center;">&#9881; Settings</a>
-            <form action="{% url 'logout' %}" method="post" style="width:100%">
-              {% csrf_token %}
-              <button type="submit" class="btn-logout" style="width:100%;text-align:center">Log out</button>
-            </form>
+          <div
+            class="user-badge"
+            style="justify-content: center; padding: 12px 16px"
+          >
+            <span class="avatar">{{ user.username|first|upper }}</span>
+            <span>{{ user.username }}</span>
+          </div>
+          <a
+            href="{% url 'bookings:booking_list' %}"
+            class="btn"
+            style="width: 100%; justify-content: center"
+            >&#128197; My Bookings</a
+          >
+          <a
+            href="{% url 'profile_update' %}"
+            class="btn"
+            style="width: 100%; justify-content: center"
+            >&#128100; Profile Update</a
+          >
+          <a
+            href="{% url 'password_change' %}"
+            class="btn"
+            style="width: 100%; justify-content: center"
+            >&#9881; Settings</a
+          >
+          <form action="{% url 'logout' %}" method="post" style="width: 100%">
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="btn-logout"
+              style="width: 100%; text-align: center"
+            >
+              Log out
+            </button>
+          </form>
           {% else %}
-            <a href="{% url 'login' %}" class="btn">Log in</a>
-            <a href="{% url 'signup' %}" class="btn btn-primary">Sign up</a>
+          <a href="{% url 'login' %}" class="btn">Log in</a>
+          <a href="{% url 'signup' %}" class="btn btn-primary">Sign up</a>
           {% endif %}
         </div>
       </div>
@@ -485,8 +532,7 @@
         <div class="alert alert-{{ message.tags }}">{{ message }}</div>
         {% endfor %}
       </div>
-      {% endif %}
-      {% block content %}{% endblock content %}
+      {% endif %} {% block content %}{% endblock content %}
     </main>
 
     <footer>
@@ -535,15 +581,17 @@
       // Active nav link — highlight based on current path
       (function setActiveLink() {
         const currentPath = location.pathname;
-        document.querySelectorAll(".nav-links a, .mobile-menu a").forEach((link) => {
-          const href = link.getAttribute("href");
-          if (href && href !== "#" && currentPath.startsWith(href)) {
-            const active = href === "/" ? currentPath === "/" : true;
-            if (active) link.classList.add("active");
-          } else {
-            link.classList.remove("active");
-          }
-        });
+        document
+          .querySelectorAll(".nav-links a, .mobile-menu a")
+          .forEach((link) => {
+            const href = link.getAttribute("href");
+            if (href && href !== "#" && currentPath.startsWith(href)) {
+              const active = href === "/" ? currentPath === "/" : true;
+              if (active) link.classList.add("active");
+            } else {
+              link.classList.remove("active");
+            }
+          });
       })();
 
       // Intersection Observer for scroll-reveal animations
@@ -558,7 +606,7 @@
               }
             });
           },
-          { threshold: 0.1 }
+          { threshold: 0.1 },
         );
         revealElements.forEach((el) => observer.observe(el));
       }
