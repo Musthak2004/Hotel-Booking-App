@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Booking #{{ booking.id }} — Hotel Booking{% endblock title %}
+
+{% block extra_styles %}
+<style>
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover { color: var(--accent); }
+
+  .detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .detail-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+  }
+
+  .detail-header .status-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .status-badge.pending { background: #fffbeb; color: #d97706; }
+  .status-badge.confirmed { background: #ecfdf5; color: #059669; }
+  .status-badge.cancelled { background: #fef2f2; color: #dc2626; }
+  .status-badge.completed { background: #eff6ff; color: #3b82f6; }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 700px) {
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+
+  .detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .detail-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .info-row:last-child { border-bottom: none; }
+
+  .info-row .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .info-row .label { font-size: 13px; color: var(--text-muted); }
+  .info-row .value { font-size: 14px; font-weight: 500; color: var(--text); }
+
+  .price-display {
+    text-align: center;
+    padding: 24px;
+  }
+
+  .price-display .amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .price-display .period {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .price-display .breakdown {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  .detail-meta-footer {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .action-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .btn-cancel {
+    background: transparent;
+    color: var(--error);
+    border-color: var(--error);
+  }
+
+  .btn-cancel:hover { background: #fef2f2; color: var(--error); }
+</style>
+{% endblock extra_styles %}
+
+{% block content %}
+<div class="container">
+  <a href="{% url 'bookings:booking_list' %}" class="back-link reveal">&larr; Back to My Bookings</a>
+
+  <div class="reveal">
+    <div class="detail-header">
+      <div>
+        <h1>Booking #{{ booking.id }}</h1>
+      </div>
+      <span class="status-badge {{ booking.status }}">{{ booking.get_status_display }}</span>
+    </div>
+  </div>
+
+  {% if booking.status == "pending" %}
+  <div class="action-bar reveal">
+    <span class="btn" style="border-color:var(--border);color:var(--text-muted);cursor:default;">&#128197; Booked on {{ booking.created_at|date:"M j, Y" }}</span>
+  </div>
+  {% endif %}
+
+  <div class="detail-grid">
+    <div class="detail-card reveal">
+      <h3>Booking Details</h3>
+      <div class="info-row">
+        <div class="icon">&#128719;</div>
+        <div>
+          <div class="label">Room</div>
+          <div class="value">
+            <a href="{% url 'rooms:room_detail' booking.room.id %}" style="color:var(--accent);">
+              {{ booking.room.hotel.name }} — Room {{ booking.room.room_number }}
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="icon">&#128197;</div>
+        <div>
+          <div class="label">Check-in</div>
+          <div class="value">{{ booking.check_in|date:"l, F j, Y" }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="icon">&#128197;</div>
+        <div>
+          <div class="label">Check-out</div>
+          <div class="value">{{ booking.check_out|date:"l, F j, Y" }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="icon">&#128101;</div>
+        <div>
+          <div class="label">Guests</div>
+          <div class="value">{{ booking.guests }} guest{% if booking.guests != 1 %}s{% endif %}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card reveal">
+      <h3>Payment Summary</h3>
+      <div class="price-display">
+        <div class="amount">${{ booking.total_price }}</div>
+        <div class="period">total</div>
+        {% with days=booking.check_out|timeuntil:booking.check_in %}
+        {% endwith %}
+        <div class="breakdown">
+          ${{ booking.room.price_per_night }} &times;
+          {% widthratio booking.check_out|timeuntil:booking.check_in|cut:" "|cut:"," 1 1 as days %}
+          {{ booking.check_out|timeuntil:booking.check_in }}
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="icon">&#128179;</div>
+        <div>
+          <div class="label">Price per night</div>
+          <div class="value">${{ booking.room.price_per_night }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="icon">&#128205;</div>
+        <div>
+          <div class="label">Location</div>
+          <div class="value">{{ booking.room.hotel.city }}, {{ booking.room.hotel.country }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-meta-footer reveal">
+    <span>Booking #{{ booking.id }}</span>
+    <span>Created {{ booking.created_at|date:"M j, Y g:i A" }}</span>
+    {% if booking.updated_at != booking.created_at %}
+    <span>Updated {{ booking.updated_at|date:"M j, Y g:i A" }}</span>
+    {% endif %}
+  </div>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+  document.querySelectorAll(".info-row a").forEach(function(link) {
+    if (!link.getAttribute("href") || link.getAttribute("href") === "#") return;
+  });
+</script>
+{% endblock extra_scripts %}

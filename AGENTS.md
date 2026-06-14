@@ -9,6 +9,7 @@ python manage.py test             # all 36 tests
 python manage.py test accounts    # accounts app tests
 python manage.py test pages       # pages app tests
 python manage.py test hotels      # hotels app tests
+python manage.py test rooms       # rooms app tests
 python manage.py test accounts.tests.CustomUserModelTests.test_create_user_with_email  # single test
 python manage.py makemigrations   # after model changes
 python manage.py migrate
@@ -19,7 +20,7 @@ python manage.py createsuperuser  # username + email + password required
 
 ## Architecture
 
-Four Django apps under `django_project/` settings:
+Five Django apps under `django_project/` settings:
 
 | App | Role | Templates | Entrypoints |
 |---|---|---|---|
@@ -27,6 +28,7 @@ Four Django apps under `django_project/` settings:
 | `pages` | Home page | `templates/home.html` (project-level) | `urls.py`, `views.py` |
 | `hotels` | Hotel CRUD | `hotels/templates/hotels/` (app-level) | `urls.py` (namespace `hotels`), `views.py`, `models.py`, `admin.py`, `forms.py` |
 | `rooms` | Room CRUD (per hotel) | `rooms/templates/rooms/` (app-level) | `urls.py` (namespace `rooms`), `views.py`, `models.py`, `admin.py`, `forms.py` |
+| `bookings` | Bookings (per user) | `bookings/templates/bookings/` (app-level) | `urls.py` (namespace `bookings`), `views.py`, `models.py`, `admin.py`, `forms.py` |
 
 Project-level `templates/base.html` has inlined CSS with CSS variables (`--accent`, `--error`, `--success`, `--border`, `--radius`, `--shadow`, etc.). All templates inherit from it.
 
@@ -62,6 +64,21 @@ Project-level `templates/base.html` has inlined CSS with CSS variables (`--accen
 - **Filtering**: `?q=` (room number / hotel name), `?room_type=`. Paginates 12 per page.
 - **Role gating**: `RoomCreateView` requires `role == "owner"`. `RoomUpdateView` and `RoomDeleteView` check `request.user == room.hotel.owner`.
 - **Hotel detail** page shows up to 3 rooms for that hotel linked to room detail.
+
+## Bookings app
+
+- **Views** (`bookings/views.py`): `BookingCreateView`, `BookingListView`, `BookingDetailView`
+- **URLs** (`bookings/urls.py`, namespace `bookings`):
+
+| URL | View name | Template |
+|---|---|---|
+| `/bookings/` | `booking_list` | `booking_list.html` |
+| `/bookings/create/` | `booking_create` | `booking_form.html` |
+| `/bookings/<pk>/` | `booking_detail` | `booking_detail.html` |
+
+- **Login required**: All booking views require authentication. `BookingListView` filters by `request.user`. Paginates 10 per page.
+- **Create flow**: `BookingCreateView` auto-sets `user` and computes `total_price = room.price_per_night * days`. No availability validation.
+- **User dropdown** includes "My Bookings" link.
 
 ## Auth URLs (`accounts/urls.py`, prefix `/accounts/`)
 

@@ -431,6 +431,7 @@
                   <strong>{{ user.username }}</strong>
                   <span>{{ user.email }}</span>
                 </div>
+                <a href="{% url 'bookings:booking_list' %}">&#128197; My Bookings</a>
                 <a href="{% url 'profile_update' %}">&#128100; Profile Update</a>
                 <a href="{% url 'password_change' %}">&#9881; Settings</a>
                 <form action="{% url 'logout' %}" method="post" style="display:flex">
@@ -462,6 +463,7 @@
               <span class="avatar">{{ user.username|first|upper }}</span>
               <span>{{ user.username }}</span>
             </div>
+            <a href="{% url 'bookings:booking_list' %}" class="btn" style="width:100%;justify-content:center;">&#128197; My Bookings</a>
             <a href="{% url 'profile_update' %}" class="btn" style="width:100%;justify-content:center;">&#128100; Profile Update</a>
             <a href="{% url 'password_change' %}" class="btn" style="width:100%;justify-content:center;">&#9881; Settings</a>
             <form action="{% url 'logout' %}" method="post" style="width:100%">
