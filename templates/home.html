@@ -111,16 +111,36 @@
     border-radius: var(--radius);
     border: 1px solid var(--border);
     overflow: hidden;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
   }
 
-  .hotel-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+  .hotel-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    transform: translateY(-4px);
+  }
 
   .hotel-img {
     height: 180px;
     background-size: cover;
     background-position: center;
+    position: relative;
   }
+
+  .hotel-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+  }
+
+  .hotel-badge.success { background: var(--success); }
 
   .hotel-body { padding: 20px; }
 
@@ -134,8 +154,17 @@
   .hotel-body .location {
     font-size: 13px;
     color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stars {
+    display: flex;
+    gap: 2px;
     margin-bottom: 10px;
   }
+
+  .stars span { color: var(--warning); font-size: 14px; }
+  .stars span.empty { color: var(--border); }
 
   .hotel-body .price {
     font-size: 18px;
@@ -272,29 +301,42 @@
   <p class="section-sub">Hand-picked stays loved by travellers.</p>
 
   <div class="hotel-grid">
-    <div class="hotel-card">
-      <div class="hotel-img" style="background-image:url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80')"></div>
+    <div class="hotel-card reveal">
+      <div class="hotel-img" style="background-image:url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80')">
+        <span class="hotel-badge">Popular</span>
+      </div>
       <div class="hotel-body">
         <h3>The Grand Palace</h3>
         <p class="location">London, UK</p>
+        <div class="stars">
+          <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+        </div>
         <p class="price">$240 <span>/ night</span></p>
       </div>
     </div>
 
-    <div class="hotel-card">
-      <div class="hotel-img" style="background-image:url('https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600&q=80')"></div>
+    <div class="hotel-card reveal">
+      <div class="hotel-img" style="background-image:url('https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600&q=80')">
+        <span class="hotel-badge success">Top rated</span>
+      </div>
       <div class="hotel-body">
         <h3>Seaside Resort</h3>
         <p class="location">Bali, Indonesia</p>
+        <div class="stars">
+          <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+        </div>
         <p class="price">$180 <span>/ night</span></p>
       </div>
     </div>
 
-    <div class="hotel-card">
+    <div class="hotel-card reveal">
       <div class="hotel-img" style="background-image:url('https://images.unsplash.com/photo-1582719508461-905c673771fd?w=600&q=80')"></div>
       <div class="hotel-body">
         <h3>Mountain Lodge</h3>
         <p class="location">Zermatt, Switzerland</p>
+        <div class="stars">
+          <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span class="empty">&#9733;</span>
+        </div>
         <p class="price">$320 <span>/ night</span></p>
       </div>
     </div>
@@ -306,19 +348,19 @@
   <p class="section-sub">Everything you need for a seamless booking experience.</p>
 
   <div class="features">
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon">&#10003;</div>
       <h3>Best price guarantee</h3>
       <p>We match any lower price you find. Book with confidence, knowing you're getting the best deal.</p>
     </div>
 
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon">&#128276;</div>
       <h3>24/7 support</h3>
       <p>Our team is here around the clock to help with bookings, changes, or any questions you have.</p>
     </div>
 
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon">&#128274;</div>
       <h3>Free cancellation</h3>
       <p>Plans change. Cancel for free up to 48 hours before check-in on most bookings.</p>
@@ -327,7 +369,7 @@
 </section>
 
 <section class="container" style="margin-bottom: 64px;">
-  <div class="cta-section">
+  <div class="cta-section reveal">
     <h2>Ready to book your stay?</h2>
     <p>Join millions of travellers who trust us for their hotel bookings.</p>
     <a href="{% url 'signup' %}" class="btn btn-primary">Get started</a>

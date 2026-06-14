@@ -23,12 +23,18 @@
         --primary: #0f172a;
         --accent: #3b82f6;
         --accent-soft: #eff6ff;
+        --accent-light: #dbeafe;
         --text: #1e293b;
         --text-muted: #94a3b8;
         --border: #e2e8f0;
         --radius: 12px;
         --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
       }
+
+      html { scroll-behavior: smooth; }
 
       body {
         font-family: 'Inter', -apple-system, sans-serif;
@@ -175,6 +181,11 @@
 
       .mobile-menu .btn { flex: 1; text-align: center; }
 
+      .user-menu {
+        position: relative;
+        cursor: pointer;
+      }
+
       .user-badge {
         display: flex;
         align-items: center;
@@ -182,7 +193,12 @@
         font-size: 14px;
         font-weight: 500;
         color: var(--text);
+        padding: 6px 12px 6px 6px;
+        border-radius: 8px;
+        transition: background 0.2s;
       }
+
+      .user-badge:hover { background: var(--bg); }
 
       .user-badge .avatar {
         width: 32px;
@@ -195,6 +211,75 @@
         justify-content: center;
         font-size: 14px;
         font-weight: 600;
+      }
+
+      .user-badge .chevron {
+        font-size: 10px;
+        color: var(--text-muted);
+        transition: transform 0.2s;
+        margin-left: 2px;
+      }
+
+      .user-badge .chevron.open { transform: rotate(180deg); }
+
+      .user-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        min-width: 180px;
+        padding: 6px;
+        display: none;
+        z-index: 200;
+      }
+
+      .user-dropdown.open { display: block; }
+
+      .user-dropdown .dropdown-header {
+        padding: 10px 12px 8px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 4px;
+      }
+
+      .user-dropdown .dropdown-header strong {
+        display: block;
+        font-size: 13px;
+        color: var(--text);
+      }
+
+      .user-dropdown .dropdown-header span {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .user-dropdown a,
+      .user-dropdown button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text);
+        background: none;
+        border: none;
+        font-family: inherit;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.15s;
+      }
+
+      .user-dropdown a:hover,
+      .user-dropdown button:hover { background: var(--bg); }
+
+      .user-dropdown .danger:hover {
+        color: var(--error);
+        background: #fef2f2;
       }
 
       .btn-logout {
@@ -218,6 +303,15 @@
 
       /* Main */
       main { flex: 1; padding: 48px 0; }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
 
       /* Footer */
       footer {
@@ -255,6 +349,18 @@
         .footer-inner { flex-direction: column; text-align: center; }
       }
 
+      /* Scroll reveal */
+      .reveal {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+      }
+
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
       {% block extra_styles %}{% endblock extra_styles %}
     </style>
   </head>
@@ -265,7 +371,7 @@
         <a href="{% url 'home' %}" class="logo">Hotel<span>.</span></a>
 
         <ul class="nav-links">
-          <li><a href="{% url 'home' %}" class="active">Home</a></li>
+          <li><a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %}">Home</a></li>
           <li><a href="#">Booking</a></li>
           <li><a href="#">Blog</a></li>
           <li><a href="#">Contact</a></li>
@@ -273,14 +379,24 @@
 
         <div class="nav-actions">
           {% if user.is_authenticated %}
-            <div class="user-badge">
-              <span class="avatar">{{ user.username|first|upper }}</span>
-              <span>{{ user.username }}</span>
+            <div class="user-menu" id="userMenu">
+              <div class="user-badge" id="userToggle">
+                <span class="avatar">{{ user.username|first|upper }}</span>
+                <span>{{ user.username }}</span>
+                <span class="chevron" id="chevron">&#9660;</span>
+              </div>
+              <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                  <strong>{{ user.username }}</strong>
+                  <span>{{ user.email }}</span>
+                </div>
+                <a href="{% url 'password_change' %}">&#9881; Settings</a>
+                <form action="{% url 'logout' %}" method="post" style="display:flex">
+                  {% csrf_token %}
+                  <button type="submit" class="danger">&#10149; Log out</button>
+                </form>
+              </div>
             </div>
-            <form action="{% url 'logout' %}" method="post" style="display:inline">
-              {% csrf_token %}
-              <button type="submit" class="btn-logout">Log out</button>
-            </form>
           {% else %}
             <a href="{% url 'login' %}" class="btn">Log in</a>
             <a href="{% url 'signup' %}" class="btn btn-primary">Sign up</a>
@@ -303,6 +419,7 @@
               <span class="avatar">{{ user.username|first|upper }}</span>
               <span>{{ user.username }}</span>
             </div>
+            <a href="{% url 'password_change' %}" class="btn" style="width:100%;justify-content:center;">&#9881; Settings</a>
             <form action="{% url 'logout' %}" method="post" style="width:100%">
               {% csrf_token %}
               <button type="submit" class="btn-logout" style="width:100%;text-align:center">Log out</button>
@@ -315,12 +432,12 @@
       </div>
     </nav>
 
-    <main>{% block content %}{% endblock content %}</main>
+    <main class="fade-in">{% block content %}{% endblock content %}</main>
 
     <footer>
       <div class="container">
         <div class="footer-inner">
-          <p>&copy; 2025 Hotel. All rights reserved.</p>
+          <p>&copy; {% now "Y" %} Hotel. All rights reserved.</p>
           <div class="footer-links">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>
@@ -331,6 +448,7 @@
     </footer>
 
     <script>
+      // Hamburger
       const hamburger = document.getElementById("hamburger");
       const mobileMenu = document.getElementById("mobileMenu");
 
@@ -339,13 +457,54 @@
         mobileMenu.classList.toggle("open");
       });
 
-      // Active link
-      document.querySelectorAll(".nav-links a").forEach((link) => {
-        link.addEventListener("click", function () {
-          document.querySelectorAll(".nav-links a").forEach((l) => l.classList.remove("active"));
-          this.classList.add("active");
+      // User dropdown
+      const userToggle = document.getElementById("userToggle");
+      const userDropdown = document.getElementById("userDropdown");
+      const chevron = document.getElementById("chevron");
+
+      if (userToggle && userDropdown) {
+        userToggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          userDropdown.classList.toggle("open");
+          if (chevron) chevron.classList.toggle("open");
         });
-      });
+
+        document.addEventListener("click", (e) => {
+          if (!userToggle.contains(e.target)) {
+            userDropdown.classList.remove("open");
+            if (chevron) chevron.classList.remove("open");
+          }
+        });
+      }
+
+      // Active nav link — highlight based on current path
+      (function setActiveLink() {
+        const currentPath = location.pathname;
+        document.querySelectorAll(".nav-links a, .mobile-menu a").forEach((link) => {
+          if (link.getAttribute("href") === currentPath) {
+            link.classList.add("active");
+          } else {
+            link.classList.remove("active");
+          }
+        });
+      })();
+
+      // Intersection Observer for scroll-reveal animations
+      const revealElements = document.querySelectorAll(".reveal");
+      if (revealElements.length && "IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+                observer.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+        revealElements.forEach((el) => observer.observe(el));
+      }
     </script>
 
     {% block extra_scripts %}{% endblock extra_scripts %}
