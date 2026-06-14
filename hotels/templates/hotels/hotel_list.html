@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Hotels — Browse All Stays{% endblock title %}
+{% block title %}Hotels — Hotel Booking{% endblock title %}
 
-{% block content %}
+{% block extra_styles %}
 <style>
   .page-header {
     display: flex;
@@ -21,273 +21,439 @@
   }
 
   .page-header p {
-    font-size: 15px;
     color: var(--text-muted);
+    font-size: 15px;
+    margin-top: 4px;
   }
 
-  .filters {
+  .filter-bar {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 32px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
   }
 
-  .filters select,
-  .filters input {
+  .filter-bar .field {
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .filter-bar label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .filter-bar input,
+  .filter-bar select {
+    width: 100%;
     padding: 10px 14px;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 14px;
     font-family: inherit;
     color: var(--text);
-    background: var(--surface);
-    outline: none;
+    background: var(--bg);
     transition: border-color 0.2s;
   }
 
-  .filters select:focus,
-  .filters input:focus {
+  .filter-bar input:focus,
+  .filter-bar select:focus {
+    outline: none;
     border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
   }
 
-  .filters .btn {
+  .filter-bar .btn {
+    align-self: flex-end;
     padding: 10px 24px;
   }
 
+  /* Hotel Grid */
   .hotel-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
   }
 
+  @media (max-width: 1024px) {
+    .hotel-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 600px) {
+    .hotel-grid { grid-template-columns: 1fr; }
+  }
+
   .hotel-card {
     background: var(--surface);
-    border-radius: var(--radius);
     border: 1px solid var(--border);
+    border-radius: var(--radius);
     overflow: hidden;
-    transition: box-shadow 0.2s, transform 0.2s;
+    box-shadow: var(--shadow);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    display: flex;
+    flex-direction: column;
   }
 
   .hotel-card:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
     transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
   }
 
-  .hotel-img {
+  .hotel-card-image {
+    width: 100%;
     height: 200px;
-    background-size: cover;
-    background-position: center;
-    position: relative;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--accent-light), var(--accent-soft));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: var(--accent);
   }
 
-  .hotel-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: var(--accent);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 20px;
-    letter-spacing: 0.3px;
+  .hotel-card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
-  .hotel-body { padding: 20px; }
-
-  .hotel-body h3 {
-    font-size: 17px;
+  .hotel-card-body h2 {
+    font-size: 18px;
     font-weight: 600;
     color: var(--primary);
     margin-bottom: 4px;
   }
 
-  .hotel-body .location {
+  .hotel-card-body h2 a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .hotel-card-body h2 a:hover {
+    color: var(--accent);
+  }
+
+  .hotel-card-location {
     font-size: 13px;
     color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-
-  .stars {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 10px;
-  }
-
-  .stars span { color: var(--warning); font-size: 14px; }
-  .stars span.empty { color: var(--border); }
-
-  .hotel-body .description {
-    font-size: 14px;
-    color: var(--text-muted);
-    line-height: 1.6;
     margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .hotel-card-desc {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 16px;
+    flex: 1;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  .hotel-body .btn {
-    margin-top: 4px;
-    width: 100%;
-  }
-
-  .pagination {
+  .hotel-card-meta {
     display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 48px;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
   }
 
-  .pagination a,
-  .pagination span {
+  .hotel-card-meta span {
     display: flex;
     align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    height: 40px;
-    padding: 0 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    transition: all 0.2s;
-    text-decoration: none;
+    gap: 4px;
   }
 
-  .pagination a:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+  .hotel-card-actions {
+    display: flex;
+    gap: 8px;
   }
 
-  .pagination .current {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
+  .hotel-card-actions .btn {
+    flex: 1;
+    font-size: 13px;
+    padding: 8px 12px;
   }
 
+  .hotel-card-actions .btn-sm {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .btn-outline-danger {
+    border-color: var(--error);
+    color: var(--error);
+  }
+
+  .btn-outline-danger:hover {
+    background: #fef2f2;
+    color: var(--error);
+  }
+
+  .btn-outline-warning {
+    border-color: var(--warning);
+    color: var(--warning);
+  }
+
+  .btn-outline-warning:hover {
+    background: #fffbeb;
+    color: var(--warning);
+  }
+
+  /* Empty state */
   .empty-state {
     text-align: center;
-    padding: 80px 0;
+    padding: 80px 24px;
+    grid-column: 1 / -1;
   }
 
   .empty-state .icon {
-    font-size: 48px;
+    font-size: 64px;
     margin-bottom: 16px;
+    opacity: 0.3;
   }
 
   .empty-state h2 {
     font-size: 22px;
-    font-weight: 600;
     color: var(--primary);
     margin-bottom: 8px;
   }
 
   .empty-state p {
-    font-size: 14px;
     color: var(--text-muted);
-    margin-bottom: 24px;
+    font-size: 15px;
+    max-width: 400px;
+    margin: 0 auto 24px;
   }
 
-  @media (max-width: 1024px) {
-    .hotel-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 48px;
   }
 
-  @media (max-width: 768px) {
-    .page-header { flex-direction: column; align-items: flex-start; }
-    .filters { flex-direction: column; }
-    .filters select,
-    .filters input,
-    .filters .btn { width: 100%; }
-    .hotel-grid { grid-template-columns: 1fr; }
+  .pagination .btn {
+    min-width: 40px;
+    text-align: center;
+    padding: 8px 14px;
+  }
+
+  .pagination .btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .pagination .btn:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .pagination .step-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .results-count {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 16px;
+  }
+
+  .clear-link {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    align-self: flex-end;
+    margin-left: auto;
+    padding: 10px 0;
+  }
+
+  .clear-link:hover {
+    text-decoration: underline;
   }
 </style>
+{% endblock extra_styles %}
 
-<section class="container">
-  <div class="page-header">
+{% block content %}
+<div class="container">
+  <div class="page-header reveal">
     <div>
-      <h1>Browse hotels</h1>
-      <p>Find the perfect place to stay.</p>
+      <h1>Hotels</h1>
+      <p>Discover the perfect place to stay</p>
     </div>
-    <span style="font-size:14px;color:var(--text-muted);">Showing {{ hotels|length }} hotels</span>
+    {% if user.is_authenticated %}
+      <a href="{% url 'hotels:hotel_create' %}" class="btn btn-primary">+ Add Hotel</a>
+    {% endif %}
   </div>
 
-  <form class="filters" method="get">
-    <input type="text" name="q" placeholder="Search by name or city..."
-           value="{{ request.GET.q|default:'' }}" />
-    <select name="city">
-      <option value="">All cities</option>
-      {% for city in cities %}
-        <option value="{{ city }}" {% if request.GET.city == city %}selected{% endif %}>
-          {{ city }}
-        </option>
-      {% endfor %}
-    </select>
-    <select name="sort">
-      <option value="">Sort by</option>
-      <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Rating</option>
-      <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name</option>
-    </select>
+  <form class="filter-bar reveal" method="get">
+    <div class="field">
+      <label for="q">Search</label>
+      <input type="text" id="q" name="q" placeholder="Hotel name…" value="{{ current_q }}">
+    </div>
+
+    <div class="field">
+      <label for="city">City</label>
+      <select id="city" name="city">
+        <option value="">All cities</option>
+        {% for c in cities %}
+        <option value="{{ c }}" {% if current_city == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="sort">Sort by</label>
+      <select id="sort" name="sort">
+        <option value="newest" {% if current_sort == "newest" or not current_sort %}selected{% endif %}>Newest</option>
+        <option value="name" {% if current_sort == "name" %}selected{% endif %}>Name</option>
+      </select>
+    </div>
+
     <button type="submit" class="btn btn-primary">Filter</button>
+
+    {% if current_q or current_city %}
+      <a href="{% url 'hotels:hotel_list' %}" class="clear-link">Clear filters</a>
+    {% endif %}
   </form>
 
   {% if hotels %}
-    <div class="hotel-grid">
-      {% for hotel in hotels %}
-        <div class="hotel-card reveal">
-          <div class="hotel-img" style="background-image:url('{% if hotel.image %}{{ hotel.image.url }}{% else %}https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80{% endif %}')">
-            {% if hotel.rating >= 4.5 %}
-              <span class="hotel-badge">Top rated</span>
-            {% endif %}
-          </div>
-          <div class="hotel-body">
-            <h3>{{ hotel.name }}</h3>
-            <p class="location">{{ hotel.city }}, {{ hotel.country }}</p>
-            <div class="stars">
-              {% for i in "12345" %}
-                {% if forloop.counter <= hotel.rating %}
-                  <span>&#9733;</span>
-                {% else %}
-                  <span class="empty">&#9733;</span>
-                {% endif %}
-              {% endfor %}
-            </div>
-            {% if hotel.description %}
-              <p class="description">{{ hotel.description }}</p>
-            {% endif %}
-            <a href="#" class="btn">View details</a>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-
-    {% if page_obj and page_obj.paginator.num_pages > 1 %}
-      <div class="pagination">
-        {% if page_obj.has_previous %}
-          <a href="?page={{ page_obj.previous_page_number }}">&#8592;</a>
+  <div class="hotel-grid">
+    {% for hotel in hotels %}
+    <div class="hotel-card reveal">
+      {% if hotel.image %}
+      <img class="hotel-card-image" src="{{ hotel.image.url }}" alt="{{ hotel.name }}">
+      {% else %}
+      <div class="hotel-card-image">&#127968;</div>
+      {% endif %}
+      <div class="hotel-card-body">
+        <h2><a href="{% url 'hotels:hotel_detail' hotel.id %}">{{ hotel.name }}</a></h2>
+        <div class="hotel-card-location">&#128205; {{ hotel.city }}, {{ hotel.country }}</div>
+        {% if hotel.description %}
+        <div class="hotel-card-desc">{{ hotel.description }}</div>
         {% endif %}
-        {% for num in page_obj.paginator.page_range %}
-          {% if num == page_obj.number %}
-            <span class="current">{{ num }}</span>
-          {% else %}
-            <a href="?page={{ num }}">{{ num }}</a>
+        <div class="hotel-card-meta">
+          {% if hotel.phone_number %}
+          <span>&#128222; {{ hotel.phone_number }}</span>
           {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}">&#8594;</a>
+          {% if hotel.email %}
+          <span>&#9993; {{ hotel.email }}</span>
+          {% endif %}
+        </div>
+        {% if user.is_authenticated and hotel.owner == user %}
+        <div class="hotel-card-actions">
+          <a href="{% url 'hotels:hotel_detail' hotel.id %}" class="btn">View</a>
+          <a href="{% url 'hotels:hotel_update' hotel.id %}" class="btn btn-outline-warning btn-sm">Edit</a>
+          <a href="{% url 'hotels:hotel_delete' hotel.id %}" class="btn btn-outline-danger btn-sm">Delete</a>
+        </div>
+        {% else %}
+        <div class="hotel-card-actions">
+          <a href="{% url 'hotels:hotel_detail' hotel.id %}" class="btn">View Details</a>
+        </div>
         {% endif %}
       </div>
-    {% endif %}
-  {% else %}
-    <div class="empty-state reveal">
-      <div class="icon">&#128269;</div>
-      <h2>No hotels found</h2>
-      <p>Try adjusting your filters or search terms.</p>
-      <a href="." class="btn btn-primary">Clear filters</a>
     </div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+  <div class="pagination reveal">
+    <div class="step-links">
+      {% if page_obj.has_previous %}
+      <a class="btn" href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_city %}city={{ current_city }}&{% endif %}{% if current_sort and current_sort != "newest" %}sort={{ current_sort }}&{% endif %}page=1">&laquo; First</a>
+      <a class="btn" href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_city %}city={{ current_city }}&{% endif %}{% if current_sort and current_sort != "newest" %}sort={{ current_sort }}&{% endif %}page={{ page_obj.previous_page_number }}">&lsaquo; Prev</a>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <span class="btn active">{{ num }}</span>
+        {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+          <a class="btn" href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_city %}city={{ current_city }}&{% endif %}{% if current_sort and current_sort != "newest" %}sort={{ current_sort }}&{% endif %}page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <a class="btn" href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_city %}city={{ current_city }}&{% endif %}{% if current_sort and current_sort != "newest" %}sort={{ current_sort }}&{% endif %}page={{ page_obj.next_page_number }}">Next &rsaquo;</a>
+      <a class="btn" href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_city %}city={{ current_city }}&{% endif %}{% if current_sort and current_sort != "newest" %}sort={{ current_sort }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="results-count">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} hotel{% if page_obj.paginator.count != 1 %}s{% endif %})
+  </div>
   {% endif %}
-</section>
+
+  {% else %}
+  <div class="empty-state reveal">
+    <div class="icon">&#128205;</div>
+    <h2>No hotels found</h2>
+    <p>
+      {% if current_q or current_city %}
+        Try adjusting your search or filters.
+      {% else %}
+        There are no hotels available yet. Check back later!
+      {% endif %}
+    </p>
+    {% if user.is_authenticated and not current_q and not current_city %}
+      <a href="{% url 'hotels:hotel_create' %}" class="btn btn-primary">Add the first hotel</a>
+    {% endif %}
+    {% if current_q or current_city %}
+      <a href="{% url 'hotels:hotel_list' %}" class="btn" style="margin-top:12px;">Clear filters</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
 {% endblock content %}
+
+{% block extra_scripts %}
+<script>
+  (function() {
+    const cards = document.querySelectorAll(".hotel-card");
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = "1";
+              entry.target.style.transform = "translateY(0)";
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.05 }
+      );
+      cards.forEach((card, i) => {
+        card.style.opacity = "0";
+        card.style.transform = "translateY(20px)";
+        card.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+        card.style.transitionDelay = (i % 3) * 0.08 + "s";
+        observer.observe(card);
+      });
+    }
+  })();
+</script>
+{% endblock extra_scripts %}

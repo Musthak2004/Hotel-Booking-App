@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit {{ object.name }}{% else %}Add Hotel{% endif %} — Hotel Booking{% endblock title %}
+
+{% block extra_styles %}
+<style>
+  .form-page-header {
+    margin-bottom: 32px;
+  }
+
+  .form-page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+  }
+
+  .form-page-header p {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  .form-card {
+    max-width: 720px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    box-shadow: var(--shadow);
+  }
+
+  .form-card .field-group {
+    margin-bottom: 24px;
+  }
+
+  .form-card label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .form-card .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-card .form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+
+  .form-card textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .form-card .helptext {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .form-card .errorlist {
+    list-style: none;
+    margin: 0 0 6px;
+    padding: 0;
+  }
+
+  .form-card .errorlist li {
+    font-size: 13px;
+    color: var(--error);
+    background: #fef2f2;
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+  }
+
+  .form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .form-card { padding: 20px; }
+    .form-row-2 { grid-template-columns: 1fr; }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .form-actions .btn {
+    padding: 10px 28px;
+    font-size: 15px;
+  }
+
+  .form-actions .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border);
+  }
+
+  .form-actions .btn-secondary:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+  }
+
+  .image-preview {
+    margin-top: 12px;
+    max-width: 240px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .image-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .current-image-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+</style>
+{% endblock extra_styles %}
+
+{% block content %}
+<div class="container">
+  <div class="form-page-header reveal">
+    <h1>{% if object %}Edit {{ object.name }}{% else %}Add a New Hotel{% endif %}</h1>
+    <p>{% if object %}Update the details of your hotel listing.{% else %}Fill in the details below to list your hotel.{% endif %}</p>
+  </div>
+
+  <div class="form-card reveal">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="errorlist">
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="field-group">
+        <label for="{{ form.name.id_for_label }}">Hotel Name</label>
+        {{ form.name }}
+        {% if form.name.help_text %}<div class="helptext">{{ form.name.help_text }}</div>{% endif %}
+        {% if form.name.errors %}<ul class="errorlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.description.id_for_label }}">Description</label>
+        {{ form.description }}
+        {% if form.description.help_text %}<div class="helptext">{{ form.description.help_text }}</div>{% endif %}
+        {% if form.description.errors %}<ul class="errorlist">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.address.id_for_label }}">Address</label>
+        {{ form.address }}
+        {% if form.address.help_text %}<div class="helptext">{{ form.address.help_text }}</div>{% endif %}
+        {% if form.address.errors %}<ul class="errorlist">{% for e in form.address.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="form-row-2">
+        <div class="field-group">
+          <label for="{{ form.city.id_for_label }}">City</label>
+          {{ form.city }}
+          {% if form.city.errors %}<ul class="errorlist">{% for e in form.city.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="field-group">
+          <label for="{{ form.country.id_for_label }}">Country</label>
+          {{ form.country }}
+          {% if form.country.errors %}<ul class="errorlist">{% for e in form.country.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field-group">
+          <label for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+          {{ form.phone_number }}
+          {% if form.phone_number.errors %}<ul class="errorlist">{% for e in form.phone_number.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="field-group">
+          <label for="{{ form.email.id_for_label }}">Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}<ul class="errorlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.image.id_for_label }}">Hotel Image</label>
+        {{ form.image }}
+        {% if object and object.image %}
+        <div class="current-image-label">Current image:</div>
+        <div class="image-preview">
+          <img src="{{ object.image.url }}" alt="{{ object.name }}">
+        </div>
+        {% endif %}
+        {% if form.image.errors %}<ul class="errorlist">{% for e in form.image.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{% if object %}Save Changes{% else %}Create Hotel{% endif %}</button>
+        <a href="{% url 'hotels:hotel_list' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content %}

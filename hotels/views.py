@@ -1,29 +1,27 @@
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.urls import reverse_lazy
 from .models import Hotel
+from .forms import HotelForm
 
 
+# LIST (public)
 class HotelListView(ListView):
-
     model = Hotel
-
     template_name = "hotels/hotel_list.html"
-
     context_object_name = "hotels"
-
     paginate_by = 9
 
     def get_queryset(self):
         qs = Hotel.objects.filter(is_active=True)
-        q = self.request.GET.get("q")
-        if q:
-            qs = qs.filter(name__icontains=q)
-        city = self.request.GET.get("city")
-        if city:
-            qs = qs.filter(city=city)
-        sort = self.request.GET.get("sort")
-        if sort == "rating":
-            qs = qs.order_by("-rating")
-        elif sort == "name":
+        self._q = self.request.GET.get("q", "").strip()
+        self._city = self.request.GET.get("city", "").strip()
+        self._sort = self.request.GET.get("sort", "")
+        if self._q:
+            qs = qs.filter(name__icontains=self._q)
+        if self._city:
+            qs = qs.filter(city__iexact=self._city)
+        if self._sort == "name":
             qs = qs.order_by("name")
         else:
             qs = qs.order_by("-created_at")
@@ -37,4 +35,52 @@ class HotelListView(ListView):
             .distinct()
             .order_by("city")
         )
+        context["current_q"] = self._q
+        context["current_city"] = self._city
+        context["current_sort"] = self._sort
         return context
+
+
+# DETAIL (public)
+class HotelDetailView(DetailView):
+    model = Hotel
+    template_name = "hotels/hotel_detail.html"
+    context_object_name = "hotel"
+
+
+# CREATE (owner only)
+class HotelCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = Hotel
+    form_class = HotelForm
+    template_name = "hotels/hotel_form.html"
+    success_url = reverse_lazy("hotels:hotel_list")
+
+    def test_func(self):
+        return self.request.user.role == "owner"
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
+
+
+# UPDATE (only owner)
+class HotelUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Hotel
+    form_class = HotelForm
+    template_name = "hotels/hotel_form.html"
+    success_url = reverse_lazy("hotels:hotel_list")
+
+    def test_func(self):
+        hotel = self.get_object()
+        return self.request.user == hotel.owner
+
+
+# DELETE (only owner)
+class HotelDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Hotel
+    template_name = "hotels/hotel_confirm_delete.html"
+    success_url = reverse_lazy("hotels:hotel_list")
+
+    def test_func(self):
+        hotel = self.get_object()
+        return self.request.user == hotel.owner

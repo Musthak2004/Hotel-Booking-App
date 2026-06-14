@@ -11,76 +11,23 @@ class HotelAdmin(admin.ModelAdmin):
         "owner",
         "city",
         "country",
-        "rating",
         "is_active",
         "created_at",
-    )
-
-    list_filter = (
-        "is_active",
-        "city",
-        "country",
     )
 
     search_fields = (
         "name",
-        "owner__username",
-        "owner__email",
         "city",
         "country",
+        "owner__email",
     )
 
-    ordering = (
-        "-created_at",
+    list_filter = (
+        "city",
+        "country",
+        "is_active",
     )
 
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-    )
+    ordering = ("-created_at",)
 
-    fieldsets = (
-        (
-            "Hotel Information",
-            {
-                "fields": (
-                    "owner",
-                    "name",
-                    "description",
-                    "image",
-                )
-            },
-        ),
-        (
-            "Location",
-            {
-                "fields": (
-                    "address",
-                    "city",
-                    "country",
-                    "latitude",
-                    "longitude",
-                )
-            },
-        ),
-        (
-            "Contact Information",
-            {
-                "fields": (
-                    "phone_number",
-                    "email",
-                )
-            },
-        ),
-        (
-            "Status",
-            {
-                "fields": (
-                    "rating",
-                    "is_active",
-                    "created_at",
-                    "updated_at",
-                )
-            },
-        ),
-    )
+    readonly_fields = ("created_at", "updated_at")
