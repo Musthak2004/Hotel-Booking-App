@@ -5,33 +5,49 @@
 ```powershell
 .venv\Scripts\Activate.ps1
 python manage.py runserver        # dev server — http://127.0.0.1:8000
-python manage.py test             # all tests
+python manage.py test             # all 36 tests
 python manage.py test accounts    # accounts app tests
 python manage.py test pages       # pages app tests
 python manage.py test hotels      # hotels app tests
 python manage.py test accounts.tests.CustomUserModelTests.test_create_user_with_email  # single test
 python manage.py makemigrations   # after model changes
 python manage.py migrate
-python manage.py createsuperuser  # username + email + password (username still required)
+python manage.py createsuperuser  # username + email + password required
 ```
 
-`python` = Python 3.13.5 from `.venv`. Activate venv first (note: `Activate.ps1`, not `activate`).
+`python` = Python 3.13.5 from `.venv`. Use `Activate.ps1` (not `activate`).
 
-## Apps
+## Architecture
 
-Three apps: `accounts/` (auth), `pages/` (home page), `hotels/` (hotel listing).
+Three Django apps under `django_project/` settings:
 
-| App | Templates | Entrypoints |
+| App | Role | Templates | Entrypoints |
+|---|---|---|---|
+| `accounts` | Auth (custom user, signup, profile) | `templates/registration/` (project-level) | `urls.py`, `views.py`, `models.py`, `forms.py`, `signals.py` |
+| `pages` | Home page | `templates/home.html` (project-level) | `urls.py`, `views.py` |
+| `hotels` | Hotel CRUD | `hotels/templates/hotels/` (app-level) | `urls.py` (namespace `hotels`), `views.py`, `models.py`, `admin.py`, `forms.py` |
+
+Project-level `templates/base.html` has inlined CSS with CSS variables (`--accent`, `--error`, `--success`, `--border`, `--radius`, `--shadow`, etc.). All templates inherit from it.
+
+## Hotels app
+
+- **Views** (`hotels/views.py`): `HotelListView`, `HotelDetailView`, `HotelCreateView`, `HotelUpdateView`, `HotelDeleteView`
+- **URLs** (`hotels/urls.py`, namespace `hotels`):
+
+| URL | View name | Template |
 |---|---|---|
-| `accounts` | `templates/registration/` (project-level) | `accounts/urls.py`, `accounts/views.py`, `accounts/models.py`, `accounts/forms.py`, `accounts/signals.py` |
-| `pages` | `templates/home.html` (project-level) | `pages/urls.py`, `pages/views.py` |
-| `hotels` | `hotels/templates/hotels/` (app-level) | `hotels/urls.py` (namespace `hotels`), `hotels/views.py`, `hotels/models.py`, `hotels/admin.py` |
+| `/hotels/` | `hotel_list` | `hotel_list.html` |
+| `/hotels/<pk>/` | `hotel_detail` | `hotel_detail.html` |
+| `/hotels/create/` | `hotel_create` | `hotel_form.html` |
+| `/hotels/<pk>/edit/` | `hotel_update` | `hotel_form.html` |
+| `/hotels/<pk>/delete/` | `hotel_delete` | `hotel_confirm_delete.html` |
 
-Accounts and pages templates live in project-level `templates/`. Hotels templates live inside the app. All inherit from `base.html`. CSS is inlined in `<style>` blocks using CSS variables (`--accent`, `--error`, `--success`, `--warning`, `--border`, `--radius`, `--shadow`, etc.).
+- **Filtering**: `?q=` (name icontains), `?city=` (iexact), `?sort=name` (default: newest first). Paginates 9 per page. Provides `cities` and `current_*` context.
+- **Home page** (`pages/views.py`): passes `featured_hotels` (6 most recent active) to template.
 
-## Auth URLs (defined explicitly in `accounts/urls.py`)
+## Auth URLs (`accounts/urls.py`, prefix `/accounts/`)
 
-| URL pattern | View name | Template |
+| URL | View name | Template |
 |---|---|---|
 | `login/` | `login` | `registration/login.html` |
 | `logout/` | `logout` | (default) |
@@ -44,28 +60,18 @@ Accounts and pages templates live in project-level `templates/`. Hotels template
 | `reset/<uidb64>/<token>/` | `password_reset_confirm` | `registration/password_reset_confirm.html` |
 | `reset/done/` | `password_reset_complete` | `registration/password_reset_complete.html` |
 
-Project wiring: `django_project/urls.py` includes `accounts.urls`, `pages.urls`, and `hotels.urls`. In `DEBUG` mode, serves `MEDIA_URL` via `django.conf.urls.static.static`.
-
-## Hotels app
-
-- URL: `/hotels/`, namespace `hotels`, view name `hotel_list`
-- `HotelListView` at `hotels/views.py` — filtered by `q` (name), `city`, `sort` (rating/name) query params. Paginates 9 per page. Provides `cities` context via `get_context_data()`.
-- `Hotel` model at `hotels/models.py`: `owner` (FK CustomUser), `name`, `description`, `address`, `city`, `country`, `phone_number`, `email`, `rating` (Decimal, 0.0–5.0), `image`, `latitude`, `longitude`, `is_active`, `created_at`, `updated_at`.
-- Admin registered at `hotels/admin.py` with list display, filters, search, and fieldsets.
-
 ## Key gotchas
 
 | Gotcha | Detail |
 |---|---|
-| **Custom user model** | `AUTH_USER_MODEL = "accounts.CustomUser"`. `USERNAME_FIELD = "email"`, but `username` is still in `REQUIRED_FIELDS`. Login by email. |
-| **Signal auto-creates Profile** | `accounts/signals.py` hooks `post_save` on `CustomUser`. Every user created (admin, shell, tests) gets a `Profile`. Connected via `AccountsConfig.ready()` in `apps.py`. |
-| **CustomUser fields** | `email` (unique), `phone_number` (blank), `role` (`customer`/`owner`, default `customer`). |
-| **Profile fields** | `address`, `city`, `country`, `postal_code` (all blank-able), `profile_picture` (ImageField, `profiles/`). MEDIA_ROOT and MEDIA_URL configured, but uploading may need `media/` directory. |
-| **Profile update view** | `accounts/views.py:14` — `@login_required` function view handling both `CustomUserUpdateForm` and `ProfileUpdateForm`. URL: `accounts/profile/update/`. Template: `registration/profile_update.html`. |
-| **Signup form** | `CustomUserRegistrationForm` extends `UserCreationForm`. Fields: username, email, phone_number, role, password1, password2. Widgets use `form-control` CSS class. |
-| **Email backend** | `EMAIL_BACKEND = "django.core.email.backends.console.EmailBackend"` — password reset emails print to console. |
+| **Custom user model** | `AUTH_USER_MODEL = "accounts.CustomUser"`. `USERNAME_FIELD = "email"` — login by email, but `username` is still in `REQUIRED_FIELDS`. |
+| **Role system** | `role` field: `customer` (default) or `owner`. Only `owner` users can create/edit/delete hotels — gated by `UserPassesTestMixin`. |
+| **Django 6.0 403 quirk** | `AccessMixin.handle_no_permission` raises `PermissionDenied` for **any authenticated user** who fails a test (not just when `raise_exception=True`). Views override it with `messages.error()` + `redirect()`. Messages CSS is in `base.html`. |
+| **Signal auto-creates Profile** | `accounts/signals.py` — only `create_user_profile` on `post_save` (the old `save_user_profile` was removed). Connected via `AccountsConfig.ready()`. Profile update view has null-safety fallback. |
+| **Profile update view** | `accounts/views.py` — `@login_required` function view handling both `CustomUserUpdateForm` and `ProfileUpdateForm`. URL: `accounts/profile/update/`. |
+| **Email backend** | `django.core.mail.backends.console.EmailBackend` — password reset emails print to console. |
 | **`static()` import** | From `django.conf.urls.static`, not `django.contrib.staticfiles` (Django 6.0 change). |
-| **Nav dropdown** | Authenticated users see a clickable user badge (top-right). Opens a dropdown with **Profile Update** (`profile_update`), **Settings** (`password_change`), and **Log out**. Mobile hamburger menu has the same items inline. |
-| **Mobile menu Booking** | Desktop nav links to `hotels:hotel_list`; mobile menu still uses `#` as placeholder. |
-| **No linter/CI** | No linter, formatter, type checker, or CI. Only dependency beyond Django is Pillow. `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` hardcoded. `TIME_ZONE = "America/New_York"`. |
-| **Django 6.0** | Template setting uses `DIRS: [BASE_DIR / 'templates']`. `static()` import from `django.conf.urls.static`. |
+| **No linter/CI** | No linter, formatter, type checker, or CI. Only dependency beyond Django is Pillow. `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` hardcoded. |
+| **Hotel model fields** | `owner` (FK CustomUser), `name`, `description`, `address`, `city`, `country`, `phone_number` (blank), `email` (blank), `image` (nullable), `is_active`, `created_at`, `updated_at`. No `rating`/`latitude`/`longitude` — those were removed. |
+| **Image uploads** | Hotel images → `media/hotels/`. Profile pictures → `media/profiles/`. `media/` directory is gitignored. |
+| **CSS convention** | All CSS is inlined in `<style>` blocks using CSS custom properties defined in `base.html`. No external stylesheets. Form fields use `form-control` class. |
