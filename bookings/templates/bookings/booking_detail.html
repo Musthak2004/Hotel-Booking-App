@@ -240,6 +240,14 @@
     </div>
   </div>
 
+  <div class="action-bar reveal">
+    {% if booking.payment %}
+    <a href="{% url 'payments:payment_detail' booking.payment.id %}" class="btn btn-primary">&#128179; View Payment</a>
+    {% else %}
+    <a href="{% url 'payments:payment_create' booking.id %}" class="btn btn-primary">&#128179; Pay Now</a>
+    {% endif %}
+  </div>
+
   <div class="detail-meta-footer reveal">
     <span>Booking #{{ booking.id }}</span>
     <span>Created {{ booking.created_at|date:"M j, Y g:i A" }}</span>

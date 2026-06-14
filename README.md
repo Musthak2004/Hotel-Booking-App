@@ -15,6 +15,7 @@ A Django 6.0 hotel booking platform with role-based access (customers / hotel ow
 - **Hotels**: browse/search/filter, owner-only CRUD, paginated grid (9/page)
 - **Rooms**: browse/search/filter by type, owner-only CRUD, paginated grid (12/page), linked from hotel detail
 - **Bookings**: user-scoped CRUD, auto-computed `total_price = price_per_night * nights`, status badges, paginated (10/page)
+- **Payments**: one payment per booking, auto-set amount, method selection (card/PayPal/bank/cash), linked from booking detail
 
 ## Project Structure
 
@@ -24,6 +25,7 @@ hotel_booking/
 ├── hotels/                # Hotel CRUD
 ├── rooms/                 # Room CRUD
 ├── bookings/              # Booking CRUD
+├── payments/              # Payment per booking
 ├── pages/                 # Home page
 ├── templates/             # base.html, home.html, registration/
 │   └── registration/      # Login, signup, password reset templates
@@ -49,7 +51,7 @@ Visit **http://127.0.0.1:8000**.
 | Command | Description |
 |---|---|
 | `python manage.py runserver` | Dev server |
-| `python manage.py test` | All 130 tests |
+| `python manage.py test` | All 152 tests |
 | `python manage.py test hotels` | Single app |
 | `python manage.py test bookings.tests.BookingCreateViewTests` | Single class |
 | `python manage.py makemigrations` | After model changes |
@@ -77,6 +79,8 @@ Visit **http://127.0.0.1:8000**.
 | `/bookings/` | Booking list | `bookings` |
 | `/bookings/create/` | Create booking | `bookings` |
 | `/bookings/<id>/` | Booking detail | `bookings` |
+| `/payments/create/<booking_id>/` | Create payment | `payments` |
+| `/payments/<id>/` | Payment detail | `payments` |
 
 ## Models
 
@@ -89,3 +93,5 @@ Visit **http://127.0.0.1:8000**.
 **Room** — FK hotel, room_number, room_type (choices), description (blank), price_per_night (Decimal), capacity, total/available_rooms, image (nullable), is_available, timestamps.
 
 **Booking** — FK user + room, check_in/check_out, guests, total_price (auto-computed), status (pending/confirmed/cancelled/completed), timestamps.
+
+**Payment** — OneToOne booking, amount (auto-set), payment_method (card/paypal/bank/cash), transaction_id, status (pending/completed/failed/refunded), paid_at, timestamps.

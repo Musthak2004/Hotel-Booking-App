@@ -5,7 +5,7 @@
 ```powershell
 .venv\Scripts\Activate.ps1
 python manage.py runserver        # http://127.0.0.1:8000
-python manage.py test             # 130 tests
+python manage.py test             # 152 tests
 python manage.py test hotels      # single app
 python manage.py test bookings.tests.BookingCreateViewTests  # single class
 python manage.py makemigrations   # after model changes
@@ -26,6 +26,7 @@ Five Django apps under `django_project/settings.py`. Namespaces: `hotels`, `room
 | `hotels` | Hotel CRUD, owner-gated | `hotels/templates/hotels/` |
 | `rooms` | Room CRUD per hotel, owner-gated | `rooms/templates/rooms/` |
 | `bookings` | Booking CRUD per user | `bookings/templates/bookings/` |
+| `payments` | Payment per booking (OneToOne) | `payments/templates/payments/` |
 
 All templates extend `templates/base.html` (inlined CSS with CSS variables, `form-control` class on widgets).
 
@@ -47,6 +48,7 @@ All templates extend `templates/base.html` (inlined CSS with CSS variables, `for
 - `Hotel`: `owner` (FK CustomUser), `name`, `description`, `address`, `city`, `country`, `phone_number` (blank), `email` (blank), `image` (nullable), `is_active`, `created_at`, `updated_at`. No rating/lat/lng.
 - `Room`: `hotel` (FK Hotel), `room_number`, `room_type` (single/double/deluxe/suite/family), `description` (blank), `price_per_night` (Decimal), `capacity` (default 1), `total_rooms` (default 1), `available_rooms` (default 1), `image` (nullable), `is_available`, `created_at`, `updated_at`.
 - `Booking`: `user` (FK CustomUser), `room` (FK Room), `check_in`, `check_out`, `guests` (default 1), `total_price` (Decimal, auto-computed on create), `status` (pending/confirmed/cancelled/completed), `created_at`, `updated_at`.
+- `Payment`: `booking` (OneToOne Booking), `amount`, `payment_method` (card/paypal/bank/cash), `transaction_id` (blank), `status` (pending/completed/failed/refunded), `paid_at` (nullable), `created_at`, `updated_at`.
 
 ## Gotchas
 
@@ -54,3 +56,4 @@ All templates extend `templates/base.html` (inlined CSS with CSS variables, `for
 - `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` hardcoded in settings.
 - `media/` is gitignored; images upload to `media/hotels/`, `media/rooms/`, `media/profiles/`.
 - Booking create has no availability validation — `total_price = room.price_per_night * days`.
+- Payment create URL takes `booking_id` (`/payments/create/<booking_id>/`); view auto-sets `amount` from `booking.total_price`. Only one payment allowed per booking (redirects if payment already exists).
