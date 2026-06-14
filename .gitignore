@@ -20,6 +20,13 @@ env/
 *.swp
 *.swo
 
+# Railway
+staticfiles/
+
+# Environment
+.env
+.env.production
+
 # OS
 .DS_Store
 Thumbs.db
