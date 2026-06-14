@@ -26,18 +26,26 @@ A Django-based hotel booking platform with user authentication, role-based acces
 ### Pages
 - Home page (`TemplateView` at `/`)
 
+### Hotel Listings
+- Browse hotels at `/hotels/` with search by name, filter by city, and sort by rating/name
+- Hotel model: name, description, address, city, country, rating, image, contact info, location coordinates
+- Administered via Django admin with list display, filters, search, and fieldsets
+- Paginated list view (9 per page)
+
 ## Project Structure
 
 ```
 hotel_booking/
 ├── accounts/              # Auth app (models, views, forms, urls, signals)
+├── hotels/                # Hotels app (models, views, admin, urls)
+│   └── templates/hotels/  # App-level templates (hotel_list.html)
 ├── pages/                 # Pages app (home page)
 ├── django_project/        # Project settings, root URL config
 ├── templates/             # Project-level templates
 │   ├── base.html          # Base template with CSS variables
 │   ├── home.html          # Home page
 │   └── registration/      # Auth templates (login, signup, password reset, etc.)
-├── media/                 # User-uploaded files (profile pictures)
+├── media/                 # User-uploaded files (profile pictures, hotel images)
 ├── manage.py
 └── requirements.txt
 ```
@@ -68,14 +76,17 @@ Visit **http://127.0.0.1:8000** in your browser.
 ```powershell
 python manage.py runserver              # Dev server
 python manage.py test                   # Run all tests (36 tests)
-python manage.py test accounts          # Accounts app tests (27 tests)
-python manage.py test pages             # Pages app tests (9 tests)
+python manage.py test accounts          # Accounts app tests
+python manage.py test pages             # Pages app tests
+python manage.py test hotels            # Hotels app tests
 python manage.py makemigrations         # Create migrations after model changes
 python manage.py migrate                # Apply migrations
 python manage.py createsuperuser        # Create admin user
 ```
 
-## Auth URLs
+## URLs
+
+### Auth
 
 | URL | View | Template |
 |-----|------|----------|
@@ -90,6 +101,12 @@ python manage.py createsuperuser        # Create admin user
 | `/accounts/reset/<uidb64>/<token>/` | PasswordResetConfirmView | `registration/password_reset_confirm.html` |
 | `/accounts/reset/done/` | PasswordResetCompleteView | `registration/password_reset_complete.html` |
 
+### Hotels
+
+| URL | View | Template |
+|-----|------|----------|
+| `/hotels/` | HotelListView | `hotels/hotel_list.html` |
+
 ## Models
 
 ### CustomUser (extends AbstractUser)
@@ -101,3 +118,11 @@ python manage.py createsuperuser        # Create admin user
 - `user` — OneToOne to CustomUser
 - `address`, `city`, `country`, `postal_code` — all optional
 - `profile_picture` — ImageField (uploaded to `profiles/`)
+
+### Hotel
+- `owner` — FK to CustomUser (related_name `hotels`)
+- `name`, `description`, `address`, `city`, `country`
+- `phone_number`, `email`, `rating` (0.0–5.0)
+- `image` — ImageField (uploaded to `hotels/`)
+- `latitude`, `longitude` — optional coordinates
+- `is_active`, `created_at`, `updated_at`

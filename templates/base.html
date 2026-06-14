@@ -372,7 +372,7 @@
 
         <ul class="nav-links">
           <li><a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %}">Home</a></li>
-          <li><a href="#">Booking</a></li>
+          <li><a href="{% url 'hotels:hotel_list' %}" class="{% if 'hotels' in request.path %}active{% endif %}">Booking</a></li>
           <li><a href="#">Blog</a></li>
           <li><a href="#">Contact</a></li>
         </ul>
@@ -417,8 +417,8 @@
         <div class="nav-actions">
           {% if user.is_authenticated %}
             <div class="user-badge" style="justify-content:center;padding:12px 16px;">
-              <span class="avatar">{{ user.username|first|upper }}</span
-              <span>{{ user.username }}</span
+              <span class="avatar">{{ user.username|first|upper }}</span>
+              <span>{{ user.username }}</span>
             </div>
             <a href="{% url 'profile_update' %}" class="btn" style="width:100%;justify-content:center;">&#128100; Profile Update</a>
             <a href="{% url 'password_change' %}" class="btn" style="width:100%;justify-content:center;">&#9881; Settings</a>
