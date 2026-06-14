@@ -305,7 +305,7 @@
       <h1>Hotels</h1>
       <p>Discover the perfect place to stay</p>
     </div>
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and user.role == "owner" %}
       <a href="{% url 'hotels:hotel_create' %}" class="btn btn-primary">+ Add Hotel</a>
     {% endif %}
   </div>
@@ -418,7 +418,7 @@
         There are no hotels available yet. Check back later!
       {% endif %}
     </p>
-    {% if user.is_authenticated and not current_q and not current_city %}
+    {% if user.is_authenticated and user.role == "owner" and not current_q and not current_city %}
       <a href="{% url 'hotels:hotel_create' %}" class="btn btn-primary">Add the first hotel</a>
     {% endif %}
     {% if current_q or current_city %}

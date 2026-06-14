@@ -1,6 +1,8 @@
+from django.shortcuts import redirect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
+from django.contrib import messages
 from .models import Hotel
 from .forms import HotelForm
 
@@ -58,6 +60,10 @@ class HotelCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def test_func(self):
         return self.request.user.role == "owner"
 
+    def handle_no_permission(self):
+        messages.error(self.request, "Only hotel owners can create listings.")
+        return redirect("hotels:hotel_list")
+
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super().form_valid(form)
@@ -74,6 +80,10 @@ class HotelUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         hotel = self.get_object()
         return self.request.user == hotel.owner
 
+    def handle_no_permission(self):
+        messages.error(self.request, "You can only edit your own hotels.")
+        return redirect("hotels:hotel_list")
+
 
 # DELETE (only owner)
 class HotelDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -84,3 +94,7 @@ class HotelDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         hotel = self.get_object()
         return self.request.user == hotel.owner
+
+    def handle_no_permission(self):
+        messages.error(self.request, "You can only delete your own hotels.")
+        return redirect("hotels:hotel_list")
