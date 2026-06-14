@@ -27,10 +27,10 @@ A Django-based hotel booking platform with user authentication, role-based acces
 - Home page (`TemplateView` at `/`)
 
 ### Hotel Listings
-- Browse hotels at `/hotels/` with search by name, filter by city, and sort by rating/name
-- Hotel model: name, description, address, city, country, rating, image, contact info, location coordinates
-- Administered via Django admin with list display, filters, search, and fieldsets
-- Paginated list view (9 per page)
+- Browse hotels at `/hotels/` with search by name, filter by city, and sort by name or newest
+- Full CRUD: create, detail, update, and delete — owner-only for create/edit/delete
+- Paginated grid view (9 per page) with search/filter bar
+- Role-gated: only `owner` users can manage hotels
 
 ## Project Structure
 
@@ -38,7 +38,7 @@ A Django-based hotel booking platform with user authentication, role-based acces
 hotel_booking/
 ├── accounts/              # Auth app (models, views, forms, urls, signals)
 ├── hotels/                # Hotels app (models, views, admin, urls)
-│   └── templates/hotels/  # App-level templates (hotel_list.html)
+│   └── templates/hotels/  # App-level templates (list, detail, form, confirm delete)
 ├── pages/                 # Pages app (home page)
 ├── django_project/        # Project settings, root URL config
 ├── templates/             # Project-level templates
@@ -106,6 +106,10 @@ python manage.py createsuperuser        # Create admin user
 | URL | View | Template |
 |-----|------|----------|
 | `/hotels/` | HotelListView | `hotels/hotel_list.html` |
+| `/hotels/<id>/` | HotelDetailView | `hotels/hotel_detail.html` |
+| `/hotels/create/` | HotelCreateView | `hotels/hotel_form.html` |
+| `/hotels/<id>/edit/` | HotelUpdateView | `hotels/hotel_form.html` |
+| `/hotels/<id>/delete/` | HotelDeleteView | `hotels/hotel_confirm_delete.html` |
 
 ## Models
 
@@ -122,7 +126,6 @@ python manage.py createsuperuser        # Create admin user
 ### Hotel
 - `owner` — FK to CustomUser (related_name `hotels`)
 - `name`, `description`, `address`, `city`, `country`
-- `phone_number`, `email`, `rating` (0.0–5.0)
-- `image` — ImageField (uploaded to `hotels/`)
-- `latitude`, `longitude` — optional coordinates
+- `phone_number`, `email` — both optional (blank)
+- `image` — ImageField (uploaded to `hotels/`, nullable)
 - `is_active`, `created_at`, `updated_at`
