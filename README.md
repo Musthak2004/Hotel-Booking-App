@@ -10,6 +10,7 @@ A Django 6.0 hotel booking platform with role-based access (customers / hotel ow
 
 ## Features
 
+- **Contact**: contact page with info cards and FAQ at `/accounts/contact/`
 - **Auth**: email-based login, signup, password change/reset, roles (`customer` / `owner`)
 - **Profile**: auto-created via signal, update at `/accounts/profile/update/`
 - **Hotels**: browse/search/filter, owner-only CRUD, paginated grid (9/page)
@@ -67,6 +68,7 @@ Visit **http://127.0.0.1:8000**.
 | `/` | Home | `pages` |
 | `/accounts/login/` | Login | `accounts` |
 | `/accounts/signup/` | SignUp | `accounts` |
+| `/accounts/contact/` | Contact | `accounts` |
 | `/accounts/profile/update/` | Profile update | `accounts` |
 | `/hotels/` | Hotel list | `hotels` |
 | `/hotels/<id>/` | Hotel detail | `hotels` |

@@ -432,7 +432,7 @@
               >Rooms</a
             >
           </li>
-          <li><a href="#">Contact</a></li>
+          <li><a href="{% url 'contact' %}" class="{% if '/accounts/contact/' in request.path %}active{% endif %}">Contact</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -479,7 +479,7 @@
         <a href="{% url 'hotels:hotel_list' %}">Hotels</a>
         <a href="{% url 'rooms:room_list' %}">Rooms</a>
         <a href="#">Blog</a>
-        <a href="#">Contact</a>
+        <a href="{% url 'contact' %}">Contact</a>
         <div class="nav-actions">
           {% if user.is_authenticated %}
           <div

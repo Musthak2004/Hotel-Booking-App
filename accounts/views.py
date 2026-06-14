@@ -1,5 +1,5 @@
 from django.urls import reverse_lazy
-from django.views.generic import CreateView
+from django.views.generic import CreateView, TemplateView
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from .forms import CustomUserRegistrationForm, CustomUserUpdateForm, ProfileUpdateForm
@@ -9,6 +9,9 @@ class SignUpView(CreateView):
     form_class = CustomUserRegistrationForm
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
+
+class ContactPageView(TemplateView):
+    template_name = "registration/contact.html"
 
 @login_required
 def profile_update(request):
