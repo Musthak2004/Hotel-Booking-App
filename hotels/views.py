@@ -61,6 +61,8 @@ class HotelCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return self.request.user.role == "owner"
 
     def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
         messages.error(self.request, "Only hotel owners can create listings.")
         return redirect("hotels:hotel_list")
 
@@ -81,6 +83,8 @@ class HotelUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return self.request.user == hotel.owner
 
     def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
         messages.error(self.request, "You can only edit your own hotels.")
         return redirect("hotels:hotel_list")
 
@@ -96,5 +100,7 @@ class HotelDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user == hotel.owner
 
     def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
         messages.error(self.request, "You can only delete your own hotels.")
         return redirect("hotels:hotel_list")

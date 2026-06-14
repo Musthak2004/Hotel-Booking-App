@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.http import Http404
 from django.urls import reverse_lazy
 
 from django.views.generic import (
@@ -75,4 +76,10 @@ class BookingDetailView(
     )
 
     context_object_name = "booking"
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset=queryset)
+        if obj.user != self.request.user:
+            raise Http404
+        return obj
 

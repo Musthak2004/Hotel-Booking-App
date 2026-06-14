@@ -4,109 +4,53 @@
 
 ```powershell
 .venv\Scripts\Activate.ps1
-python manage.py runserver        # dev server — http://127.0.0.1:8000
-python manage.py test             # all 36 tests
-python manage.py test accounts    # accounts app tests
-python manage.py test pages       # pages app tests
-python manage.py test hotels      # hotels app tests
-python manage.py test rooms       # rooms app tests
-python manage.py test accounts.tests.CustomUserModelTests.test_create_user_with_email  # single test
+python manage.py runserver        # http://127.0.0.1:8000
+python manage.py test             # 130 tests
+python manage.py test hotels      # single app
+python manage.py test bookings.tests.BookingCreateViewTests  # single class
 python manage.py makemigrations   # after model changes
 python manage.py migrate
-python manage.py createsuperuser  # username + email + password required
+python manage.py createsuperuser  # username + email + password
 ```
 
 `python` = Python 3.13.5 from `.venv`. Use `Activate.ps1` (not `activate`).
 
 ## Architecture
 
-Five Django apps under `django_project/` settings:
+Five Django apps under `django_project/settings.py`. Namespaces: `hotels`, `rooms`, `bookings`.
 
-| App | Role | Templates | Entrypoints |
-|---|---|---|---|
-| `accounts` | Auth (custom user, signup, profile) | `templates/registration/` (project-level) | `urls.py`, `views.py`, `models.py`, `forms.py`, `signals.py` |
-| `pages` | Home page | `templates/home.html` (project-level) | `urls.py`, `views.py` |
-| `hotels` | Hotel CRUD | `hotels/templates/hotels/` (app-level) | `urls.py` (namespace `hotels`), `views.py`, `models.py`, `admin.py`, `forms.py` |
-| `rooms` | Room CRUD (per hotel) | `rooms/templates/rooms/` (app-level) | `urls.py` (namespace `rooms`), `views.py`, `models.py`, `admin.py`, `forms.py` |
-| `bookings` | Bookings (per user) | `bookings/templates/bookings/` (app-level) | `urls.py` (namespace `bookings`), `views.py`, `models.py`, `admin.py`, `forms.py` |
-
-Project-level `templates/base.html` has inlined CSS with CSS variables (`--accent`, `--error`, `--success`, `--border`, `--radius`, `--shadow`, etc.). All templates inherit from it.
-
-## Hotels app
-
-- **Views** (`hotels/views.py`): `HotelListView`, `HotelDetailView`, `HotelCreateView`, `HotelUpdateView`, `HotelDeleteView`
-- **URLs** (`hotels/urls.py`, namespace `hotels`):
-
-| URL | View name | Template |
+| App | Role | Templates |
 |---|---|---|
-| `/hotels/` | `hotel_list` | `hotel_list.html` |
-| `/hotels/<pk>/` | `hotel_detail` | `hotel_detail.html` |
-| `/hotels/create/` | `hotel_create` | `hotel_form.html` |
-| `/hotels/<pk>/edit/` | `hotel_update` | `hotel_form.html` |
-| `/hotels/<pk>/delete/` | `hotel_delete` | `hotel_confirm_delete.html` |
+| `accounts` | Auth (custom user, signup, profile) | `templates/registration/` (project-level) |
+| `pages` | Home page (featured hotels from DB) | `templates/home.html` |
+| `hotels` | Hotel CRUD, owner-gated | `hotels/templates/hotels/` |
+| `rooms` | Room CRUD per hotel, owner-gated | `rooms/templates/rooms/` |
+| `bookings` | Booking CRUD per user | `bookings/templates/bookings/` |
 
-- **Filtering**: `?q=` (name icontains), `?city=` (iexact), `?sort=name` (default: newest first). Paginates 9 per page. Provides `cities` and `current_*` context.
-- **Home page** (`pages/views.py`): passes `featured_hotels` (6 most recent active) to template.
+All templates extend `templates/base.html` (inlined CSS with CSS variables, `form-control` class on widgets).
 
-## Rooms app
+## Auth
 
-- **Views** (`rooms/views.py`): `RoomListView`, `RoomDetailView`, `RoomCreateView`, `RoomUpdateView`, `RoomDeleteView`
-- **URLs** (`rooms/urls.py`, namespace `rooms`):
+- `AUTH_USER_MODEL = "accounts.CustomUser"`, login by email (`USERNAME_FIELD = "email"`), `username` still in `REQUIRED_FIELDS`.
+- Role: `customer` (default) or `owner`. Only owners can create/edit/delete hotels and rooms.
+- Profile auto-created via `post_save` signal; profile update view has null-safety fallback.
+- `EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"` — password reset prints to console.
 
-| URL | View name | Template |
-|---|---|---|
-| `/rooms/` | `room_list` | `room_list.html` |
-| `/rooms/<pk>/` | `room_detail` | `room_detail.html` |
-| `/rooms/create/` | `room_create` | `room_form.html` |
-| `/rooms/<pk>/edit/` | `room_update` | `room_form.html` |
-| `/rooms/<pk>/delete/` | `room_delete` | `room_confirm_delete.html` |
+## Django 6.0 quirks
 
-- **Filtering**: `?q=` (room number / hotel name), `?room_type=`. Paginates 12 per page.
-- **Role gating**: `RoomCreateView` requires `role == "owner"`. `RoomUpdateView` and `RoomDeleteView` check `request.user == room.hotel.owner`.
-- **Hotel detail** page shows up to 3 rooms for that hotel linked to room detail.
+- **`static()` import**: from `django.conf.urls.static`, not `django.contrib.staticfiles`.
+- **`handle_no_permission`**: `AccessMixin` raises `PermissionDenied` for any authenticated user who fails `test_func()`, even without `raise_exception=True`. Override with `messages.error()` + `redirect()`. When combining `LoginRequiredMixin` + `UserPassesTestMixin`, override must check `is_authenticated` first or unauthenticated users won't get the login redirect.
+- **`ImageField`**: `.image` attribute returns `ImageFieldFile` wrapper when empty, not Python `None`. Test with `assertFalse` not `assertIsNone`.
 
-## Bookings app
+## Models
 
-- **Views** (`bookings/views.py`): `BookingCreateView`, `BookingListView`, `BookingDetailView`
-- **URLs** (`bookings/urls.py`, namespace `bookings`):
+- `Hotel`: `owner` (FK CustomUser), `name`, `description`, `address`, `city`, `country`, `phone_number` (blank), `email` (blank), `image` (nullable), `is_active`, `created_at`, `updated_at`. No rating/lat/lng.
+- `Room`: `hotel` (FK Hotel), `room_number`, `room_type` (single/double/deluxe/suite/family), `description` (blank), `price_per_night` (Decimal), `capacity` (default 1), `total_rooms` (default 1), `available_rooms` (default 1), `image` (nullable), `is_available`, `created_at`, `updated_at`.
+- `Booking`: `user` (FK CustomUser), `room` (FK Room), `check_in`, `check_out`, `guests` (default 1), `total_price` (Decimal, auto-computed on create), `status` (pending/confirmed/cancelled/completed), `created_at`, `updated_at`.
 
-| URL | View name | Template |
-|---|---|---|
-| `/bookings/` | `booking_list` | `booking_list.html` |
-| `/bookings/create/` | `booking_create` | `booking_form.html` |
-| `/bookings/<pk>/` | `booking_detail` | `booking_detail.html` |
+## Gotchas
 
-- **Login required**: All booking views require authentication. `BookingListView` filters by `request.user`. Paginates 10 per page.
-- **Create flow**: `BookingCreateView` auto-sets `user` and computes `total_price = room.price_per_night * days`. No availability validation.
-- **User dropdown** includes "My Bookings" link.
-
-## Auth URLs (`accounts/urls.py`, prefix `/accounts/`)
-
-| URL | View name | Template |
-|---|---|---|
-| `login/` | `login` | `registration/login.html` |
-| `logout/` | `logout` | (default) |
-| `signup/` | `signup` | `registration/signup.html` |
-| `profile/update/` | `profile_update` | `registration/profile_update.html` |
-| `password_change/` | `password_change` | `registration/password_change_form.html` |
-| `password_change/done/` | `password_change_done` | `registration/password_change_done.html` |
-| `password_reset/` | `password_reset` | `registration/password_reset_form.html` |
-| `password_reset/done/` | `password_reset_done` | `registration/password_reset_done.html` |
-| `reset/<uidb64>/<token>/` | `password_reset_confirm` | `registration/password_reset_confirm.html` |
-| `reset/done/` | `password_reset_complete` | `registration/password_reset_complete.html` |
-
-## Key gotchas
-
-| Gotcha | Detail |
-|---|---|
-| **Custom user model** | `AUTH_USER_MODEL = "accounts.CustomUser"`. `USERNAME_FIELD = "email"` — login by email, but `username` is still in `REQUIRED_FIELDS`. |
-| **Role system** | `role` field: `customer` (default) or `owner`. Only `owner` users can create/edit/delete hotels — gated by `UserPassesTestMixin`. |
-| **Django 6.0 403 quirk** | `AccessMixin.handle_no_permission` raises `PermissionDenied` for **any authenticated user** who fails a test (not just when `raise_exception=True`). Views override it with `messages.error()` + `redirect()`. Messages CSS is in `base.html`. |
-| **Signal auto-creates Profile** | `accounts/signals.py` — only `create_user_profile` on `post_save` (the old `save_user_profile` was removed). Connected via `AccountsConfig.ready()`. Profile update view has null-safety fallback. |
-| **Profile update view** | `accounts/views.py` — `@login_required` function view handling both `CustomUserUpdateForm` and `ProfileUpdateForm`. URL: `accounts/profile/update/`. |
-| **Email backend** | `django.core.mail.backends.console.EmailBackend` — password reset emails print to console. |
-| **`static()` import** | From `django.conf.urls.static`, not `django.contrib.staticfiles` (Django 6.0 change). |
-| **No linter/CI** | No linter, formatter, type checker, or CI. Only dependency beyond Django is Pillow. `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` hardcoded. |
-| **Hotel model fields** | `owner` (FK CustomUser), `name`, `description`, `address`, `city`, `country`, `phone_number` (blank), `email` (blank), `image` (nullable), `is_active`, `created_at`, `updated_at`. No `rating`/`latitude`/`longitude` — those were removed. |
-| **Image uploads** | Hotel images → `media/hotels/`. Profile pictures → `media/profiles/`. `media/` directory is gitignored. |
-| **CSS convention** | All CSS is inlined in `<style>` blocks using CSS custom properties defined in `base.html`. No external stylesheets. Form fields use `form-control` class. |
+- Only dependency beyond Django is Pillow. No linter, formatter, type checker, or CI.
+- `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` hardcoded in settings.
+- `media/` is gitignored; images upload to `media/hotels/`, `media/rooms/`, `media/profiles/`.
+- Booking create has no availability validation — `total_price = room.price_per_night * days`.
