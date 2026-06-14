@@ -16,6 +16,7 @@ A Django 6.0 hotel booking platform with role-based access (customers / hotel ow
 - **Rooms**: browse/search/filter by type, owner-only CRUD, paginated grid (12/page), linked from hotel detail
 - **Bookings**: user-scoped CRUD, auto-computed `total_price = price_per_night * nights`, status badges, paginated (10/page)
 - **Payments**: one payment per booking, auto-set amount, method selection (card/PayPal/bank/cash), linked from booking detail
+- **Reviews**: star ratings and comments per hotel, one review per user per hotel, inline display on hotel detail page
 
 ## Project Structure
 
@@ -26,6 +27,7 @@ hotel_booking/
 ├── rooms/                 # Room CRUD
 ├── bookings/              # Booking CRUD
 ├── payments/              # Payment per booking
+├── reviews/               # Reviews per hotel
 ├── pages/                 # Home page
 ├── templates/             # base.html, home.html, registration/
 │   └── registration/      # Login, signup, password reset templates
@@ -51,7 +53,7 @@ Visit **http://127.0.0.1:8000**.
 | Command | Description |
 |---|---|
 | `python manage.py runserver` | Dev server |
-| `python manage.py test` | All 152 tests |
+| `python manage.py test` | All 179 tests |
 | `python manage.py test hotels` | Single app |
 | `python manage.py test bookings.tests.BookingCreateViewTests` | Single class |
 | `python manage.py makemigrations` | After model changes |
@@ -81,6 +83,9 @@ Visit **http://127.0.0.1:8000**.
 | `/bookings/<id>/` | Booking detail | `bookings` |
 | `/payments/create/<booking_id>/` | Create payment | `payments` |
 | `/payments/<id>/` | Payment detail | `payments` |
+| `/reviews/create/<hotel_id>/` | Create review | `reviews` |
+| `/reviews/<id>/edit/` | Update review | `reviews` |
+| `/reviews/<id>/delete/` | Delete review | `reviews` |
 
 ## Models
 
@@ -95,3 +100,5 @@ Visit **http://127.0.0.1:8000**.
 **Booking** — FK user + room, check_in/check_out, guests, total_price (auto-computed), status (pending/confirmed/cancelled/completed), timestamps.
 
 **Payment** — OneToOne booking, amount (auto-set), payment_method (card/paypal/bank/cash), transaction_id, status (pending/completed/failed/refunded), paid_at, timestamps.
+
+**Review** — FK user + hotel, rating (1-5), comment, timestamps. UniqueConstraint on (user, hotel) — one review per user per hotel.

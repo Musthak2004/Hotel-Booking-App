@@ -5,7 +5,7 @@
 ```powershell
 .venv\Scripts\Activate.ps1
 python manage.py runserver        # http://127.0.0.1:8000
-python manage.py test             # 152 tests
+python manage.py test             # 179 tests (use --parallel for speed)
 python manage.py test hotels      # single app
 python manage.py test bookings.tests.BookingCreateViewTests  # single class
 python manage.py makemigrations   # after model changes
@@ -17,7 +17,7 @@ python manage.py createsuperuser  # username + email + password
 
 ## Architecture
 
-Five Django apps under `django_project/settings.py`. Namespaces: `hotels`, `rooms`, `bookings`.
+Seven Django apps under `django_project/settings.py`. Namespaces: `hotels`, `rooms`, `bookings`, `reviews`.
 
 | App | Role | Templates |
 |---|---|---|
@@ -27,6 +27,7 @@ Five Django apps under `django_project/settings.py`. Namespaces: `hotels`, `room
 | `rooms` | Room CRUD per hotel, owner-gated | `rooms/templates/rooms/` |
 | `bookings` | Booking CRUD per user | `bookings/templates/bookings/` |
 | `payments` | Payment per booking (OneToOne) | `payments/templates/payments/` |
+| `reviews` | Reviews per hotel, user-gated | `reviews/templates/reviews/` |
 
 All templates extend `templates/base.html` (inlined CSS with CSS variables, `form-control` class on widgets).
 
@@ -49,6 +50,7 @@ All templates extend `templates/base.html` (inlined CSS with CSS variables, `for
 - `Room`: `hotel` (FK Hotel), `room_number`, `room_type` (single/double/deluxe/suite/family), `description` (blank), `price_per_night` (Decimal), `capacity` (default 1), `total_rooms` (default 1), `available_rooms` (default 1), `image` (nullable), `is_available`, `created_at`, `updated_at`.
 - `Booking`: `user` (FK CustomUser), `room` (FK Room), `check_in`, `check_out`, `guests` (default 1), `total_price` (Decimal, auto-computed on create), `status` (pending/confirmed/cancelled/completed), `created_at`, `updated_at`.
 - `Payment`: `booking` (OneToOne Booking), `amount`, `payment_method` (card/paypal/bank/cash), `transaction_id` (blank), `status` (pending/completed/failed/refunded), `paid_at` (nullable), `created_at`, `updated_at`.
+- `Review`: `user` (FK CustomUser), `hotel` (FK Hotel), `rating` (PositiveSmallInteger, 1-5), `comment`, `created_at`, `updated_at`. UniqueConstraint on (user, hotel) — one review per user per hotel.
 
 ## Gotchas
 
@@ -57,3 +59,4 @@ All templates extend `templates/base.html` (inlined CSS with CSS variables, `for
 - `media/` is gitignored; images upload to `media/hotels/`, `media/rooms/`, `media/profiles/`.
 - Booking create has no availability validation — `total_price = room.price_per_night * days`.
 - Payment create URL takes `booking_id` (`/payments/create/<booking_id>/`); view auto-sets `amount` from `booking.total_price`. Only one payment allowed per booking (redirects if payment already exists).
+- Review create URL takes `hotel_id` (`/reviews/create/<hotel_id>/`); one review per user per hotel (duplicate create redirects to edit). No `ReviewListView` or `ReviewDetailView` — reviews display inline on hotel detail page.
