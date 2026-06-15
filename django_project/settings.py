@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'bookings.apps.BookingsConfig',
     'payments.apps.PaymentsConfig',
     'reviews.apps.ReviewsConfig',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -110,9 +111,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+# Cloudinary configuration
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STORAGES = {
+    'default': {
+        'BACKEND': 'cloudinary_storage.storage.RawCloudinaryStorage',
+    },
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
