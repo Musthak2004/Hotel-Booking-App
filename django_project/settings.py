@@ -9,13 +9,17 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'Kic25vrrGLF9YQBMypJsuwRqKizHN1
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 if not DEBUG:
-    ALLOWED_HOSTS += ['.vercel.app']
+    ALLOWED_HOSTS += ['.vercel.app', '.now.sh']
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+# Cloudinary configuration
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+IS_CLOUDINARY_CONFIGURED = bool(CLOUDINARY_URL and 'cloudinary://' in CLOUDINARY_URL)
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,8 +34,9 @@ INSTALLED_APPS = [
     'bookings.apps.BookingsConfig',
     'payments.apps.PaymentsConfig',
     'reviews.apps.ReviewsConfig',
-    'cloudinary_storage',
 ]
+if IS_CLOUDINARY_CONFIGURED:
+    INSTALLED_APPS += ['cloudinary_storage']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -63,14 +68,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_project.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     try:
-        DATABASES = {'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
+        DATABASES = {'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600, ssl_require=True)}
     except Exception:
         DATABASES = {
             'default': {
@@ -86,10 +88,7 @@ else:
         }
     }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -105,26 +104,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = "America/New_York"
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-# Cloudinary configuration
-CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
-IS_CLOUDINARY_CONFIGURED = CLOUDINARY_URL and 'cloudinary://' in CLOUDINARY_URL
-
+# Static files
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -148,6 +134,8 @@ else:
     }
 
 CSRF_TRUSTED_ORIGINS = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS') else []
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS += ['https://*.vercel.app']
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 LOGIN_REDIRECT_URL = "home"
@@ -161,4 +149,3 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-
