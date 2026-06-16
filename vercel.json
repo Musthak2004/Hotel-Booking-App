@@ -3,12 +3,11 @@
   "builds": [
     {
       "src": "django_project/wsgi.py",
-      "numCPUs": 1,
-      "env": " la",
+      "use": "@vercel/python",
       "config": {
+        "maxLambdaSize": "15mb",
         "runtime": "python3.12"
-      },
-      "phase": "build"
+      }
     }
   ],
   "routes": [

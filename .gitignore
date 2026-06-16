@@ -20,7 +20,7 @@ env/
 *.swp
 *.swo
 
-# Railway
+# Vercel
 staticfiles/
 
 # Environment
