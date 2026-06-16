@@ -16,31 +16,37 @@ class HotelListView(ListView):
     paginate_by = 9
 
     def get_queryset(self):
-        qs = Hotel.objects.filter(is_active=True)
-        self._q = self.request.GET.get("q", "").strip()
-        self._city = self.request.GET.get("city", "").strip()
-        self._sort = self.request.GET.get("sort", "")
-        if self._q:
-            qs = qs.filter(name__icontains=self._q)
-        if self._city:
-            qs = qs.filter(city__iexact=self._city)
-        if self._sort == "name":
-            qs = qs.order_by("name")
-        else:
-            qs = qs.order_by("-created_at")
-        return qs
+        try:
+            qs = Hotel.objects.filter(is_active=True)
+            self._q = self.request.GET.get("q", "").strip()
+            self._city = self.request.GET.get("city", "").strip()
+            self._sort = self.request.GET.get("sort", "")
+            if self._q:
+                qs = qs.filter(name__icontains=self._q)
+            if self._city:
+                qs = qs.filter(city__iexact=self._city)
+            if self._sort == "name":
+                qs = qs.order_by("name")
+            else:
+                qs = qs.order_by("-created_at")
+            return qs
+        except Exception:
+            return Hotel.objects.none()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["cities"] = (
-            Hotel.objects.filter(is_active=True)
-            .values_list("city", flat=True)
-            .distinct()
-            .order_by("city")
-        )
-        context["current_q"] = self._q
-        context["current_city"] = self._city
-        context["current_sort"] = self._sort
+        try:
+            context["cities"] = (
+                Hotel.objects.filter(is_active=True)
+                .values_list("city", flat=True)
+                .distinct()
+                .order_by("city")
+            )
+        except Exception:
+            context["cities"] = []
+        context["current_q"] = self._q if hasattr(self, '_q') else ""
+        context["current_city"] = self._city if hasattr(self, '_city') else ""
+        context["current_sort"] = self._sort if hasattr(self, '_sort') else ""
         return context
 
 
