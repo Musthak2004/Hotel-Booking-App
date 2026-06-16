@@ -24,8 +24,18 @@ from django.http import HttpResponse
 def healthcheck(request):
     return HttpResponse("ok")
 
+def debug_db(request):
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        count = User.objects.count()
+        return HttpResponse(f"DB Connection OK. User count: {count}")
+    except Exception as e:
+        return HttpResponse(f"DB Connection FAILED: {str(e)}", status=500)
+
 urlpatterns = [
     path("health/", healthcheck, name="healthcheck"),
+    path("debug-db/", debug_db, name="debug_db"),
     path('admin/', admin.site.urls),
     path("accounts/", include("accounts.urls")),
     path("", include("pages.urls")),
