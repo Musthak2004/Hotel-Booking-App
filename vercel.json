@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "django_project/wsgi.py",
+      "numCPUs": 1,
+      "env": " la",
+      "config": {
+        "runtime": "python3.12"
+      },
+      "phase": "build"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "django_project/wsgi.py"
+    }
+  ]
+}

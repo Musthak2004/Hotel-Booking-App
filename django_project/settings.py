@@ -9,7 +9,9 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'Kic25vrrGLF9YQBMypJsuwRqKizHN1
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else ['*']
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else ['localhost', '127.0.0.1']
+if not DEBUG:
+    ALLOWED_HOSTS += ['.vercel.app', '.railway.app']
 
 
 # Application definition

@@ -14,3 +14,4 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_project.settings')
 
 application = get_wsgi_application()
+app = application # Vercel expects the app object to be named 'app'
