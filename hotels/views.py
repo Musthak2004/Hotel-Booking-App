@@ -29,7 +29,8 @@ class HotelListView(ListView):
                 qs = qs.order_by("name")
             else:
                 qs = qs.order_by("-created_at")
-            return qs
+            # Evaluate the queryset to catch DB errors before passing it to the template
+            return list(qs)
         except Exception:
             return Hotel.objects.none()
 
