@@ -113,10 +113,12 @@ USE_TZ = True
 
 # Cloudinary configuration
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+IS_CLOUDINARY_CONFIGURED = CLOUDINARY_URL and 'cloudinary://' in CLOUDINARY_URL
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-if CLOUDINARY_URL:
+
+if IS_CLOUDINARY_CONFIGURED:
     STORAGES = {
         'default': {
             'BACKEND': 'cloudinary_storage.storage.RawCloudinaryStorage',
@@ -131,7 +133,7 @@ else:
             'BACKEND': 'django.core.files.storage.FileSystemStorage',
         },
         'staticfiles': {
-            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+            'BACKEND': 'whitenoise.storage.StaticFilesStorage',
         },
     }
 
