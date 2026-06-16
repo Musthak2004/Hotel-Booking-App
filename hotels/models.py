@@ -33,3 +33,9 @@ class Hotel(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_image_url(self):
+        try:
+            return self.image.url if self.image else None
+        except Exception:
+            return None
