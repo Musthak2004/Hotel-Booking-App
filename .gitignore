@@ -20,7 +20,7 @@ env/
 *.swp
 *.swo
 
-# Vercel
+# Static files (collectstatic output)
 staticfiles/
 
 # Environment
