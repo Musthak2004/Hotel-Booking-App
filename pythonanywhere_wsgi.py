@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 
 # ---- USER MUST UPDATE THIS ----
-YOUR_PYTHONANYWHERE_USERNAME = "yourusername"
-PROJECT_DIR = f"/home/{YOUR_PYTHONANYWHERE_USERNAME}/hotel_booking"
+YOUR_PYTHONANYWHERE_USERNAME = "Umama"
+PROJECT_DIR = f"/home/{YOUR_PYTHONANYWHERE_USERNAME}/Hotel-Booking-App"
 VENV_DIR = f"/home/{YOUR_PYTHONANYWHERE_USERNAME}/.virtualenvs/hotel_booking"
 # --------------------------------
 
