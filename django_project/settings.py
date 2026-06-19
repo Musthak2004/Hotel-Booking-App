@@ -11,7 +11,7 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 if not DEBUG:
-    ALLOWED_HOSTS += ['.pythonanywhere.com', 'quickstay.isroot.in', '.isroot.in']
+    ALLOWED_HOSTS += ['.pythonanywhere.com']
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
@@ -135,7 +135,7 @@ else:
 
 CSRF_TRUSTED_ORIGINS = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS') else []
 if not DEBUG:
-    CSRF_TRUSTED_ORIGINS += ['https://*.pythonanywhere.com', 'https://quickstay.isroot.in', 'https://*.isroot.in']
+    CSRF_TRUSTED_ORIGINS += ['https://*.pythonanywhere.com']
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 LOGIN_REDIRECT_URL = "home"
