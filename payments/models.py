@@ -39,6 +39,11 @@ class Payment(models.Model):
         blank=True
     )
 
+    stripe_session_id = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
     status = models.CharField(
         max_length=20,
         choices=PAYMENT_STATUS,

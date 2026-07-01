@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Dashboard — Hotel Booking{% endblock title %}
+
+{% block extra_styles %}
+<style>
+  .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 32px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+  .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+  .stat-card .stat-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card .stat-icon { font-size: 24px; margin-bottom: 12px; }
+  .hotel-summary { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 24px; overflow: hidden; }
+  .hotel-summary-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .hotel-summary-header h3 { font-size: 16px; font-weight: 600; }
+  .hotel-summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; padding: 16px 20px; }
+  .hotel-stat { text-align: center; }
+  .hotel-stat .num { font-size: 18px; font-weight: 700; color: var(--primary); }
+  .hotel-stat .lbl { font-size: 12px; color: var(--text-muted); }
+  .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; margin-top: 32px; }
+  .recent-bookings { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .recent-bookings table { width: 100%; border-collapse: collapse; }
+  .recent-bookings th, .recent-bookings td { padding: 12px 16px; text-align: left; font-size: 13px; }
+  .recent-bookings th { background: var(--accent-soft); font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--border); }
+  .recent-bookings td { border-bottom: 1px solid var(--border); }
+  .recent-bookings tr:last-child td { border-bottom: none; }
+  .recent-bookings tr:hover td { background: var(--accent-soft); }
+  .empty-dashboard { text-align: center; padding: 60px 20px; }
+  .empty-dashboard h2 { margin-bottom: 12px; }
+  .empty-dashboard p { color: var(--text-muted); margin-bottom: 24px; }
+</style>
+{% endblock extra_styles %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header reveal">
+    <h1>&#128202; Owner Dashboard</h1>
+    <p style="color:var(--text-muted);">Manage your hotels and track performance</p>
+  </div>
+
+  {% if hotels %}
+  <div class="dashboard-grid reveal">
+    <div class="stat-card">
+      <div class="stat-icon">&#127968;</div>
+      <div class="stat-value">{{ stats.total_hotels }}</div>
+      <div class="stat-label">Hotels</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">&#128719;</div>
+      <div class="stat-value">{{ stats.total_rooms }}</div>
+      <div class="stat-label">Rooms</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">&#128197;</div>
+      <div class="stat-value">{{ stats.total_bookings }}</div>
+      <div class="stat-label">Total Bookings</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">&#128176;</div>
+      <div class="stat-value">${{ stats.revenue|floatformat:2 }}</div>
+      <div class="stat-label">Revenue</div>
+    </div>
+  </div>
+
+  <h2 class="section-title reveal">Your Hotels</h2>
+
+  {% for hs in hotel_stats %}
+  <div class="hotel-summary reveal">
+    <div class="hotel-summary-header">
+      <h3>
+        <a href="{% url 'hotels:hotel_detail' hs.hotel.id %}" style="color:var(--accent);">
+          {{ hs.hotel.name }}
+        </a>
+      </h3>
+      <a href="{% url 'hotels:hotel_update' hs.hotel.id %}" class="btn btn-sm" style="border:1px solid var(--border);">&#9998; Edit</a>
+    </div>
+    <div class="hotel-summary-stats">
+      <div class="hotel-stat">
+        <div class="num">{{ hs.room_count }}</div>
+        <div class="lbl">Rooms</div>
+      </div>
+      <div class="hotel-stat">
+        <div class="num">{{ hs.active_booking_count }}</div>
+        <div class="lbl">Active Bookings</div>
+      </div>
+      <div class="hotel-stat">
+        <div class="num">{{ hs.booking_count }}</div>
+        <div class="lbl">All Bookings</div>
+      </div>
+      <div class="hotel-stat">
+        <div class="num">${{ hs.revenue|floatformat:0 }}</div>
+        <div class="lbl">Revenue</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <h2 class="section-title reveal">Recent Bookings</h2>
+
+  <div class="recent-bookings reveal">
+    {% if recent_bookings %}
+    <table>
+      <thead>
+        <tr>
+          <th>Booking</th>
+          <th>Guest</th>
+          <th>Hotel / Room</th>
+          <th>Dates</th>
+          <th>Total</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in recent_bookings %}
+        <tr>
+          <td><a href="{% url 'bookings:booking_detail' b.id %}" style="color:var(--accent);">#{{ b.id }}</a></td>
+          <td>{{ b.user.email }}</td>
+          <td>{{ b.room.hotel.name }} — {{ b.room.room_number }}</td>
+          <td>{{ b.check_in|date:"M j" }} – {{ b.check_out|date:"M j, Y" }}</td>
+          <td>${{ b.total_price }}</td>
+          <td><span class="status-badge {{ b.status }}">{{ b.get_status_display }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="text-align:center;padding:24px;color:var(--text-muted);">No bookings yet.</p>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="empty-dashboard reveal">
+    <h2>Welcome to Your Dashboard</h2>
+    <p>You haven't created any hotels yet. Get started by adding your first property!</p>
+    <a href="{% url 'hotels:hotel_create' %}" class="btn btn-primary">&#127968; Add Your First Hotel</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock content %}

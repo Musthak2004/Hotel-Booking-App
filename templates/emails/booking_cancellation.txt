@@ -1,0 +1,7 @@
+Booking Cancelled — {{ hotel_name }}
+
+Hi {{ customer_name }}, your booking at {{ hotel_name }} has been cancelled.
+
+If a payment was made, a refund has been processed.
+
+View details: {{ booking_url }}

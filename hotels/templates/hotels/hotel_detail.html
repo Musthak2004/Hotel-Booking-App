@@ -267,6 +267,14 @@
       {% endfor %}
     </div>
   </div>
+  {% else %}
+  <div class="reveal" style="margin-bottom: 32px;">
+    <h2 style="font-size:22px;font-weight:700;color:var(--primary);margin-bottom:20px;">Rooms at {{ hotel.name }}</h2>
+    <div style="text-align:center;padding:48px 24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">
+      <div style="font-size:48px;margin-bottom:12px;">&#128716;</div>
+      <p style="color:var(--text-muted);font-size:15px;">No rooms available at this hotel yet. Check back soon!</p>
+    </div>
+  </div>
   {% endif %}
   {% endwith %}
 

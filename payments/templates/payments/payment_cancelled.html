@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Cancelled — Hotel Booking{% endblock title %}
+
+{% block content %}
+<div class="container">
+  <div class="reveal" style="max-width:600px;margin:0 auto;text-align:center;">
+    <div style="font-size:72px;margin-bottom:16px;">&#128683;</div>
+    <h1 style="font-size:28px;font-weight:700;color:var(--primary);margin-bottom:8px;">Payment Cancelled</h1>
+    <p style="font-size:16px;color:var(--text-muted);margin-bottom:8px;">
+      Your payment for <strong>Booking #{{ booking.id }}</strong> was cancelled.
+    </p>
+    <p style="font-size:14px;color:var(--text-muted);margin-bottom:32px;">
+      No charges have been made. You can try again whenever you're ready.
+    </p>
+
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'payments:payment_checkout' booking.id %}" class="btn btn-primary">&#128179; Try Again</a>
+      <a href="{% url 'bookings:booking_detail' booking.id %}" class="btn">&#128196; View Booking</a>
+    </div>
+  </div>
+</div>
+{% endblock content %}

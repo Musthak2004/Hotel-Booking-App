@@ -1,5 +1,5 @@
 from django import forms
-from .models import Hotel
+from .models import Hotel, Amenity
 
 
 class HotelForm(forms.ModelForm):
@@ -16,6 +16,7 @@ class HotelForm(forms.ModelForm):
             "phone_number",
             "email",
             "image",
+            "amenities",
         ]
 
         widgets = {
@@ -27,4 +28,5 @@ class HotelForm(forms.ModelForm):
             "phone_number": forms.TextInput(attrs={"class": "form-control"}),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
             "image": forms.FileInput(attrs={"class": "form-control"}),
+            "amenities": forms.CheckboxSelectMultiple(attrs={"class": ""}),
         }

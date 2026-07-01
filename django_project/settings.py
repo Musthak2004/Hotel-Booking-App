@@ -19,6 +19,11 @@ if not ALLOWED_HOSTS:
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
 IS_CLOUDINARY_CONFIGURED = bool(CLOUDINARY_URL and 'cloudinary://' in CLOUDINARY_URL)
 
+# Stripe configuration
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -34,6 +39,8 @@ INSTALLED_APPS = [
     'bookings.apps.BookingsConfig',
     'payments.apps.PaymentsConfig',
     'reviews.apps.ReviewsConfig',
+    'rest_framework',
+    'api',
 ]
 if IS_CLOUDINARY_CONFIGURED:
     INSTALLED_APPS += ['cloudinary_storage']
@@ -141,6 +148,8 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "Hotel Booking <noreply@hotelbooking.com>"
+SITE_URL = os.environ.get("SITE_URL", "")
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

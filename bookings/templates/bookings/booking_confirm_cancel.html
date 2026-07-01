@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Cancel Booking #{{ booking.id }} — Hotel Booking{% endblock title %}
+
+{% block content %}
+<div class="container">
+  <div class="delete-card reveal">
+    <div class="delete-icon">&#9888;&#65039;</div>
+    <h1>Cancel Booking #{{ booking.id }}</h1>
+    <p style="color:var(--text-muted);margin-bottom:24px;">
+      Are you sure you want to cancel this booking?
+    </p>
+
+    {% if booking.payment and booking.payment.status == "completed" %}
+    <div class="warning-text">
+      &#128176; This booking has been paid. Cancelling will issue a full refund.
+    </div>
+    {% endif %}
+
+    <div class="detail-card" style="text-align:left;margin-bottom:24px;">
+      <h3 style="margin-bottom:12px;">{{ booking.room.hotel.name }}</h3>
+      <div class="info-row">
+        <span class="label">Room:</span>
+        <span class="value">{{ booking.room.room_number }} ({{ booking.room.get_room_type_display }})</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Check-in:</span>
+        <span class="value">{{ booking.check_in|date:"M j, Y" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Check-out:</span>
+        <span class="value">{{ booking.check_out|date:"M j, Y" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Guests:</span>
+        <span class="value">{{ booking.guests }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Total:</span>
+        <span class="value">${{ booking.total_price }}</span>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="delete-actions">
+        <button type="submit" class="btn btn-danger">Yes, Cancel Booking</button>
+        <a href="{% url 'bookings:booking_detail' booking.id %}" class="btn btn-cancel">Keep Booking</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content %}

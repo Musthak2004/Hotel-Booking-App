@@ -1,0 +1,12 @@
+Booking Confirmed — {{ hotel_name }}
+
+Hi {{ customer_name }}, your booking is confirmed.
+
+Hotel: {{ hotel_name }}
+Room: {{ room_number }}
+Check-in: {{ check_in|date:"l, F j, Y" }}
+Check-out: {{ check_out|date:"l, F j, Y" }}
+Guests: {{ guests }}
+Total: ${{ total_price }}
+
+View your booking: {{ booking_url }}

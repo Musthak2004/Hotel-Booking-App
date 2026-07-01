@@ -15,9 +15,7 @@ class RoomForm(forms.ModelForm):
             "price_per_night",
             "capacity",
             "total_rooms",
-            "available_rooms",
             "image",
-            "is_available",
         ]
 
         widgets = {
@@ -28,7 +26,11 @@ class RoomForm(forms.ModelForm):
             "price_per_night": forms.NumberInput(attrs={"class": "form-control"}),
             "capacity": forms.NumberInput(attrs={"class": "form-control"}),
             "total_rooms": forms.NumberInput(attrs={"class": "form-control"}),
-            "available_rooms": forms.NumberInput(attrs={"class": "form-control"}),
             "image": forms.FileInput(attrs={"class": "form-control"}),
-            "is_available": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        if user is not None and user.is_authenticated:
+            self.fields["hotel"].queryset = user.hotels.all()

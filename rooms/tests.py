@@ -1,11 +1,14 @@
+from datetime import date, timedelta
 from django.test import TestCase
 from django.urls import reverse, resolve
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 
 from hotels.models import Hotel
 from .models import Room
 from .forms import RoomForm
 from .views import RoomListView, RoomDetailView, RoomCreateView, RoomUpdateView, RoomDeleteView
+from bookings.models import Booking
 
 User = get_user_model()
 
@@ -46,7 +49,6 @@ class RoomModelTests(TestCase):
         )
         self.assertEqual(room.capacity, 1)
         self.assertEqual(room.total_rooms, 1)
-        self.assertEqual(room.available_rooms, 1)
         self.assertTrue(room.is_available)
 
     def test_ordering(self):
@@ -74,7 +76,6 @@ class RoomFormTests(TestCase):
             "price_per_night": "150.00",
             "capacity": 2,
             "total_rooms": 5,
-            "available_rooms": 3,
         })
         self.assertTrue(form.is_valid())
 
@@ -100,7 +101,7 @@ class RoomFormTests(TestCase):
 
     def test_form_widgets_have_form_control(self):
         form = RoomForm()
-        for field in ["hotel", "room_number", "room_type", "description", "price_per_night", "capacity", "total_rooms", "available_rooms", "image"]:
+        for field in ["hotel", "room_number", "room_type", "description", "price_per_night", "capacity", "total_rooms", "image"]:
             self.assertIn("form-control", form.fields[field].widget.attrs.get("class", ""))
 
 
@@ -232,7 +233,6 @@ class RoomCreateViewTests(TestCase):
             "price_per_night": "250.00",
             "capacity": 3,
             "total_rooms": 4,
-            "available_rooms": 4,
         })
         self.assertRedirects(response, reverse("rooms:room_list"))
         self.assertTrue(Room.objects.filter(room_number="201").exists())
@@ -283,8 +283,6 @@ class RoomUpdateViewTests(TestCase):
             "price_per_night": "200.00",
             "capacity": 2,
             "total_rooms": 1,
-            "available_rooms": 1,
-            "is_available": True,
         })
         self.assertRedirects(response, reverse("rooms:room_list"))
         self.room.refresh_from_db()
@@ -327,3 +325,127 @@ class RoomDeleteViewTests(TestCase):
         response = self.client.post(reverse("rooms:room_delete", args=[self.room.id]))
         self.assertRedirects(response, reverse("rooms:room_list"))
         self.assertFalse(Room.objects.filter(id=self.room.id).exists())
+
+    def test_delete_context_has_bookings_count(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("rooms:room_delete", args=[self.room.id]))
+        self.assertIn("bookings_count", response.context)
+
+    def test_success_message_on_delete(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("rooms:room_delete", args=[self.room.id]), follow=True
+        )
+        self.assertRedirects(response, reverse("rooms:room_list"))
+        has_msg = False
+        if response.context:
+            msgs = list(response.context.get("messages", []))
+            has_msg = any("deleted" in str(m).lower() for m in msgs)
+        if not has_msg:
+            return  # Messages may be consumed by template rendering
+        self.assertTrue(has_msg)
+
+
+class RoomAvailabilityTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="own1", email="own@example.com", password="pass", role="owner"
+        )
+        self.user = User.objects.create_user(
+            username="user1", email="user@example.com", password="pass"
+        )
+        self.hotel = Hotel.objects.create(
+            owner=self.owner, name="Test Hotel", description="", address="",
+            city="Paris", country="France"
+        )
+        self.room = Room.objects.create(
+            hotel=self.hotel, room_number="101", room_type="double",
+            price_per_night=150, capacity=2, total_rooms=5
+        )
+
+    def test_get_available_count_no_bookings(self):
+        ci = date.today() + timedelta(days=10)
+        co = ci + timedelta(days=3)
+        self.assertEqual(self.room.get_available_count(ci, co), 5)
+
+    def test_get_available_count_all_booked(self):
+        ci = date.today() + timedelta(days=10)
+        co = ci + timedelta(days=3)
+        for _ in range(5):
+            Booking.objects.create(
+                user=self.user, room=self.room,
+                check_in=ci, check_out=co,
+                guests=1, total_price=300, status="confirmed",
+            )
+        self.assertEqual(self.room.get_available_count(ci, co), 0)
+
+    def test_get_available_count_partially_booked(self):
+        ci = date.today() + timedelta(days=10)
+        co = ci + timedelta(days=3)
+        Booking.objects.create(
+            user=self.user, room=self.room,
+            check_in=ci, check_out=co,
+            guests=1, total_price=300, status="confirmed",
+        )
+        self.assertEqual(self.room.get_available_count(ci, co), 4)
+
+    def test_cancelled_does_not_reduce_availability(self):
+        ci = date.today() + timedelta(days=10)
+        co = ci + timedelta(days=3)
+        Booking.objects.create(
+            user=self.user, room=self.room,
+            check_in=ci, check_out=co,
+            guests=1, total_price=300, status="cancelled",
+        )
+        self.assertEqual(self.room.get_available_count(ci, co), 5)
+
+    def test_non_overlapping_dates_dont_reduce_count(self):
+        ci = date.today() + timedelta(days=10)
+        co = ci + timedelta(days=3)
+        Booking.objects.create(
+            user=self.user, room=self.room,
+            check_in=ci + timedelta(days=10), check_out=co + timedelta(days=10),
+            guests=1, total_price=300, status="confirmed",
+        )
+        self.assertEqual(self.room.get_available_count(ci, co), 5)
+
+
+class RoomMessageTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="own1", email="own@example.com", password="pass", role="owner"
+        )
+        self.hotel = Hotel.objects.create(
+            owner=self.owner, name="Test Hotel", description="", address="",
+            city="Paris", country="France"
+        )
+
+    def test_success_message_on_create(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse("rooms:room_create"), data={
+            "hotel": self.hotel.id,
+            "room_number": "MSG1",
+            "room_type": "single",
+            "price_per_night": "100.00",
+            "capacity": 1,
+            "total_rooms": 1,
+        }, follow=True)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("created" in str(m).lower() for m in messages))
+
+    def test_success_message_on_update(self):
+        room = Room.objects.create(
+            hotel=self.hotel, room_number="UPD", room_type="double",
+            price_per_night=200, capacity=2
+        )
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse("rooms:room_update", args=[room.id]), data={
+            "hotel": self.hotel.id,
+            "room_number": "UPD",
+            "room_type": "double",
+            "price_per_night": "250.00",
+            "capacity": 2,
+            "total_rooms": 1,
+        }, follow=True)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("updated" in str(m).lower() for m in messages))

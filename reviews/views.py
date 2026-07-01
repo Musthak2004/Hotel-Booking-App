@@ -52,6 +52,7 @@ class ReviewCreateView(
             )
         form.instance.user = self.request.user
         form.instance.hotel = self.hotel
+        messages.success(self.request, "Review added successfully!")
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -88,6 +89,10 @@ class ReviewUpdateView(
         )
         return redirect("hotels:hotel_list")
 
+    def form_valid(self, form):
+        messages.success(self.request, "Review updated successfully!")
+        return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["hotel"] = self.object.hotel
@@ -111,6 +116,10 @@ class ReviewDeleteView(
     template_name = (
         "reviews/review_confirm_delete.html"
     )
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, "Review deleted successfully!")
+        return super().delete(request, *args, **kwargs)
 
     def test_func(self):
         review = self.get_object()

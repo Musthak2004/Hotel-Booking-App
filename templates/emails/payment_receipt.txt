@@ -1,0 +1,10 @@
+Payment Receipt — Booking #{{ booking.id }}
+
+Hi {{ customer_name }}, thank you for your payment.
+
+Hotel: {{ hotel_name }}
+Transaction: {{ transaction_id|default:"—" }}
+Paid at: {{ paid_at|date:"M j, Y g:i A" }}
+Amount Paid: ${{ amount }}
+
+View receipt: {{ payment_url }}

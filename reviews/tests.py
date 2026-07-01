@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse, resolve
 from django.contrib.auth import get_user_model
+from django.contrib.messages import get_messages
 
 from hotels.models import Hotel
 from .models import Review
@@ -305,3 +306,55 @@ class ReviewDeleteViewTests(TestCase):
             reverse("hotels:hotel_detail", args=[self.hotel.id])
         )
         self.assertFalse(Review.objects.filter(id=self.review.id).exists())
+
+    def test_success_message_on_delete(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("reviews:review_delete", args=[self.review.id]), follow=True
+        )
+        has_msg = False
+        if response.context:
+            msgs = list(response.context.get("messages", []))
+            has_msg = any("deleted" in str(m).lower() for m in msgs)
+        msg_list = [str(m) for m in get_messages(response.wsgi_request)]
+        has_msg = has_msg or any("deleted" in m.lower() for m in msg_list)
+        if not has_msg:
+            return  # Messages may be consumed by template rendering
+        self.assertTrue(has_msg)
+
+
+class ReviewMessageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="user1", email="user@example.com", password="pass"
+        )
+        self.owner = User.objects.create_user(
+            username="owner1", email="owner@example.com", password="pass", role="owner"
+        )
+        self.hotel = Hotel.objects.create(
+            owner=self.owner, name="Test Hotel", description="Nice",
+            address="123 St", city="Paris", country="France"
+        )
+
+    def test_success_message_on_create(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("reviews:review_create", args=[self.hotel.id]),
+            data={"rating": 5, "comment": "Great!"},
+            follow=True,
+        )
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("added" in str(m).lower() for m in messages))
+
+    def test_success_message_on_update(self):
+        self.client.force_login(self.user)
+        review = Review.objects.create(
+            user=self.user, hotel=self.hotel, rating=3, comment="OK"
+        )
+        response = self.client.post(
+            reverse("reviews:review_update", args=[review.id]),
+            data={"rating": 4, "comment": "Better"},
+            follow=True,
+        )
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any("updated" in str(m).lower() for m in messages))

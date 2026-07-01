@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Successful — Hotel Booking{% endblock title %}
+
+{% block content %}
+<div class="container">
+  <div class="reveal" style="max-width:600px;margin:0 auto;text-align:center;">
+    <div style="font-size:72px;margin-bottom:16px;">&#9989;</div>
+    <h1 style="font-size:28px;font-weight:700;color:var(--primary);margin-bottom:8px;">Payment Successful!</h1>
+    <p style="font-size:16px;color:var(--text-muted);margin-bottom:24px;">
+      Your payment for <strong>Booking #{{ booking.id }}</strong> has been processed.
+    </p>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px;text-align:left;box-shadow:var(--shadow);">
+      <div class="info-row">
+        <div class="icon">&#127968;</div>
+        <div>
+          <div class="label">Hotel</div>
+          <div class="value">{{ booking.room.hotel.name }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="icon">&#128719;</div>
+        <div>
+          <div class="label">Room</div>
+          <div class="value">{{ booking.room.room_number }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="icon">&#128197;</div>
+        <div>
+          <div class="label">Dates</div>
+          <div class="value">{{ booking.check_in|date:"M j, Y" }} &rarr; {{ booking.check_out|date:"M j, Y" }}</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="icon">&#128179;</div>
+        <div>
+          <div class="label">Amount Paid</div>
+          <div class="value" style="font-weight:700;color:var(--accent);">${{ booking.total_price }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="{% url 'bookings:booking_detail' booking.id %}" class="btn btn-primary">&#128196; View Booking</a>
+      <a href="{% url 'bookings:booking_list' %}" class="btn">&#128205; My Bookings</a>
+    </div>
+  </div>
+</div>
+{% endblock content %}

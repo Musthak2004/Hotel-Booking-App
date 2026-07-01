@@ -1,5 +1,6 @@
-from datetime import date
-from django.test import TestCase
+from datetime import date, timedelta
+from unittest.mock import patch, MagicMock
+from django.test import TestCase, override_settings
 from django.urls import reverse, resolve
 from django.contrib.auth import get_user_model
 
@@ -8,7 +9,7 @@ from rooms.models import Room
 from bookings.models import Booking
 from .models import Payment
 from .forms import PaymentForm
-from .views import PaymentCreateView, PaymentDetailView
+from .views import PaymentCheckoutView, PaymentDetailView, PaymentSuccessView, PaymentCancelledView
 
 User = get_user_model()
 
@@ -31,7 +32,8 @@ class PaymentModelTests(TestCase):
         )
         self.booking = Booking.objects.create(
             user=self.user, room=self.room,
-            check_in=date(2026, 7, 1), check_out=date(2026, 7, 5),
+            check_in=date.today() + timedelta(days=1),
+            check_out=date.today() + timedelta(days=5),
             guests=2, total_price=600,
         )
 
@@ -66,6 +68,13 @@ class PaymentModelTests(TestCase):
         self.assertEqual(payment.booking, self.booking)
         self.assertEqual(self.booking.payment, payment)
 
+    def test_stripe_session_id_field(self):
+        payment = Payment.objects.create(
+            booking=self.booking, amount=600, payment_method="card",
+            stripe_session_id="cs_test_abc123",
+        )
+        self.assertEqual(payment.stripe_session_id, "cs_test_abc123")
+
 
 class PaymentFormTests(TestCase):
     def test_form_valid_data(self):
@@ -84,7 +93,7 @@ class PaymentFormTests(TestCase):
         self.assertIn("form-control", form.fields["payment_method"].widget.attrs.get("class", ""))
 
 
-class PaymentCreateViewTests(TestCase):
+class PaymentCheckoutViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username="user1", email="user@example.com", password="pass"
@@ -105,84 +114,170 @@ class PaymentCreateViewTests(TestCase):
         )
         self.booking = Booking.objects.create(
             user=self.user, room=self.room,
-            check_in=date(2026, 7, 1), check_out=date(2026, 7, 5),
+            check_in=date.today() + timedelta(days=1),
+            check_out=date.today() + timedelta(days=5),
             guests=2, total_price=600,
         )
 
-    def test_url_resolves_to_create_view(self):
-        match = resolve(f"/payments/create/{self.booking.id}/")
-        self.assertEqual(match.func.view_class, PaymentCreateView)
+    def test_url_resolves_to_checkout_view(self):
+        match = resolve(f"/payments/checkout/{self.booking.id}/")
+        self.assertEqual(match.func.view_class, PaymentCheckoutView)
 
     def test_login_required(self):
         response = self.client.get(
-            reverse("payments:payment_create", args=[self.booking.id])
+            reverse("payments:payment_checkout", args=[self.booking.id])
         )
         self.assertRedirects(
             response,
-            f"/accounts/login/?next=/payments/create/{self.booking.id}/"
+            f"/accounts/login/?next=/payments/checkout/{self.booking.id}/"
         )
 
     def test_other_user_cannot_access_booking(self):
         self.client.force_login(self.other_user)
         response = self.client.get(
-            reverse("payments:payment_create", args=[self.booking.id])
+            reverse("payments:payment_checkout", args=[self.booking.id])
         )
         self.assertEqual(response.status_code, 404)
 
-    def test_uses_correct_template(self):
+    @patch("payments.views.create_checkout_session")
+    def test_redirects_to_stripe(self, mock_create_checkout):
+        mock_session = MagicMock()
+        mock_session.url = "https://checkout.stripe.com/test"
+        mock_session.__getitem__ = lambda self, key: "cs_test_abc"
+        mock_session.get = lambda key, default="": "pi_test_xyz"
+        mock_create_checkout.return_value = mock_session
+
         self.client.force_login(self.user)
         response = self.client.get(
-            reverse("payments:payment_create", args=[self.booking.id])
+            reverse("payments:payment_checkout", args=[self.booking.id])
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "payments/payment_form.html")
+        self.assertRedirects(response, "https://checkout.stripe.com/test", fetch_redirect_response=False)
+        self.assertTrue(Payment.objects.filter(booking=self.booking).exists())
 
-    def test_context_contains_booking(self):
-        self.client.force_login(self.user)
-        response = self.client.get(
-            reverse("payments:payment_create", args=[self.booking.id])
-        )
-        self.assertEqual(response.context["booking"], self.booking)
-
-    def test_redirects_if_payment_already_exists(self):
+    def test_redirects_if_payment_already_completed(self):
         Payment.objects.create(
-            booking=self.booking, amount=600, payment_method="card"
+            booking=self.booking, amount=600, payment_method="card",
+            status="completed"
         )
         self.client.force_login(self.user)
         response = self.client.get(
-            reverse("payments:payment_create", args=[self.booking.id])
+            reverse("payments:payment_checkout", args=[self.booking.id])
         )
         self.assertRedirects(
             response,
             reverse("bookings:booking_detail", args=[self.booking.id])
         )
 
-    def test_creates_payment_and_redirects(self):
-        self.client.force_login(self.user)
-        response = self.client.post(
-            reverse("payments:payment_create", args=[self.booking.id]),
-            data={"payment_method": "card"},
-        )
-        self.assertRedirects(response, reverse("bookings:booking_list"))
-        payment = Payment.objects.get(booking=self.booking)
-        self.assertEqual(payment.amount, 600)
-        self.assertEqual(payment.payment_method, "card")
-
-    def test_amount_auto_set_from_booking_total_price(self):
-        self.client.force_login(self.user)
-        self.client.post(
-            reverse("payments:payment_create", args=[self.booking.id]),
-            data={"payment_method": "paypal"},
-        )
-        payment = Payment.objects.get(booking=self.booking)
-        self.assertEqual(payment.amount, self.booking.total_price)
-
     def test_404_for_non_existent_booking(self):
         self.client.force_login(self.user)
         response = self.client.get(
-            reverse("payments:payment_create", args=[999])
+            reverse("payments:payment_checkout", args=[999])
         )
         self.assertEqual(response.status_code, 404)
+
+
+class PaymentSuccessViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="user1", email="user@example.com", password="pass"
+        )
+        self.owner = User.objects.create_user(
+            username="owner1", email="owner@example.com", password="pass", role="owner"
+        )
+        self.hotel = Hotel.objects.create(
+            owner=self.owner, name="Test Hotel", description="", address="",
+            city="Paris", country="France"
+        )
+        self.room = Room.objects.create(
+            hotel=self.hotel, room_number="101", room_type="double",
+            price_per_night=150, capacity=2
+        )
+        self.booking = Booking.objects.create(
+            user=self.user, room=self.room,
+            check_in=date.today() + timedelta(days=1),
+            check_out=date.today() + timedelta(days=5),
+            guests=2, total_price=600,
+        )
+
+    def test_url_resolves(self):
+        match = resolve(f"/payments/success/{self.booking.id}/")
+        self.assertEqual(match.func.view_class, PaymentSuccessView)
+
+    def test_login_required(self):
+        response = self.client.get(
+            reverse("payments:payment_success", args=[self.booking.id])
+        )
+        self.assertRedirects(
+            response,
+            f"/accounts/login/?next=/payments/success/{self.booking.id}/"
+        )
+
+    def test_uses_correct_template(self):
+        self.client.force_login(self.user)
+        response = self.client.get(
+            reverse("payments:payment_success", args=[self.booking.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "payments/payment_success.html")
+
+    def test_context_contains_booking(self):
+        self.client.force_login(self.user)
+        response = self.client.get(
+            reverse("payments:payment_success", args=[self.booking.id])
+        )
+        self.assertEqual(response.context["booking"], self.booking)
+
+
+class PaymentCancelledViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="user1", email="user@example.com", password="pass"
+        )
+        self.owner = User.objects.create_user(
+            username="owner1", email="owner@example.com", password="pass", role="owner"
+        )
+        self.hotel = Hotel.objects.create(
+            owner=self.owner, name="Test Hotel", description="", address="",
+            city="Paris", country="France"
+        )
+        self.room = Room.objects.create(
+            hotel=self.hotel, room_number="101", room_type="double",
+            price_per_night=150, capacity=2
+        )
+        self.booking = Booking.objects.create(
+            user=self.user, room=self.room,
+            check_in=date.today() + timedelta(days=1),
+            check_out=date.today() + timedelta(days=5),
+            guests=2, total_price=600,
+        )
+
+    def test_url_resolves(self):
+        match = resolve(f"/payments/cancelled/{self.booking.id}/")
+        self.assertEqual(match.func.view_class, PaymentCancelledView)
+
+    def test_login_required(self):
+        response = self.client.get(
+            reverse("payments:payment_cancelled", args=[self.booking.id])
+        )
+        self.assertRedirects(
+            response,
+            f"/accounts/login/?next=/payments/cancelled/{self.booking.id}/"
+        )
+
+    def test_uses_correct_template(self):
+        self.client.force_login(self.user)
+        response = self.client.get(
+            reverse("payments:payment_cancelled", args=[self.booking.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "payments/payment_cancelled.html")
+
+    def test_context_contains_booking(self):
+        self.client.force_login(self.user)
+        response = self.client.get(
+            reverse("payments:payment_cancelled", args=[self.booking.id])
+        )
+        self.assertEqual(response.context["booking"], self.booking)
 
 
 class PaymentDetailViewTests(TestCase):
@@ -206,7 +301,8 @@ class PaymentDetailViewTests(TestCase):
         )
         self.booking = Booking.objects.create(
             user=self.user, room=self.room,
-            check_in=date(2026, 7, 1), check_out=date(2026, 7, 5),
+            check_in=date.today() + timedelta(days=1),
+            check_out=date.today() + timedelta(days=5),
             guests=2, total_price=600,
         )
         self.payment = Payment.objects.create(
@@ -251,3 +347,170 @@ class PaymentDetailViewTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse("payments:payment_detail", args=[999]))
         self.assertEqual(response.status_code, 404)
+
+
+@override_settings(STRIPE_WEBHOOK_SECRET="whsec_test")
+class StripeWebhookTests(TestCase):
+    """Tests for the Stripe webhook endpoint."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="owner1", email="owner@example.com", password="pass", role="owner"
+        )
+        self.user = User.objects.create_user(
+            username="user1", email="user@example.com", password="pass"
+        )
+        self.hotel = Hotel.objects.create(
+            owner=self.owner, name="Test Hotel", description="", address="",
+            city="Paris", country="France"
+        )
+        self.room = Room.objects.create(
+            hotel=self.hotel, room_number="101", room_type="double",
+            price_per_night=150, capacity=2
+        )
+        self.booking = Booking.objects.create(
+            user=self.user, room=self.room,
+            check_in=date.today() + timedelta(days=1),
+            check_out=date.today() + timedelta(days=5),
+            guests=2, total_price=600,
+        )
+        self.webhook_url = reverse("payments:stripe_webhook")
+
+    @patch("payments.webhooks.stripe.Webhook.construct_event")
+    def test_valid_checkout_session_creates_payment_and_confirms_booking(self, mock_construct):
+        """A valid checkout.session.completed event creates a Payment
+        and sets booking.status = 'confirmed'."""
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "id": "cs_test_valid123",
+                    "metadata": {"booking_id": str(self.booking.id)},
+                    "payment_intent": "pi_test_valid",
+                }
+            },
+        }
+        response = self.client.post(
+            self.webhook_url,
+            data='{"dummy":"payload"}',
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="test_sig",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, "confirmed")
+        payment = Payment.objects.get(booking=self.booking)
+        self.assertEqual(payment.status, "completed")
+        self.assertEqual(payment.stripe_session_id, "cs_test_valid123")
+        self.assertEqual(payment.transaction_id, "pi_test_valid")
+        self.assertEqual(payment.amount, 600)
+
+    @patch("payments.webhooks.stripe.Webhook.construct_event")
+    def test_duplicate_webhook_is_idempotent(self, mock_construct):
+        """A second webhook with the same session ID should not error."""
+        event_data = {
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "id": "cs_test_dup",
+                    "metadata": {"booking_id": str(self.booking.id)},
+                    "payment_intent": "pi_test_dup",
+                }
+            },
+        }
+        mock_construct.return_value = event_data
+
+        # First call
+        self.client.post(
+            self.webhook_url,
+            data='{}', content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="sig",
+        )
+        self.assertEqual(Payment.objects.filter(booking=self.booking).count(), 1)
+
+        # Second call (duplicate)
+        mock_construct.return_value = event_data
+        response2 = self.client.post(
+            self.webhook_url,
+            data='{}', content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="sig",
+        )
+        self.assertEqual(response2.status_code, 200)
+        # Still only one payment record
+        self.assertEqual(Payment.objects.filter(booking=self.booking).count(), 1)
+        # Booking stays confirmed
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, "confirmed")
+
+    @patch("payments.webhooks.stripe.Webhook.construct_event")
+    def test_invalid_signature_returns_400(self, mock_construct):
+        """When construct_event raises SignatureVerificationError,
+        the endpoint returns 400."""
+        import stripe as stripe_module
+        mock_construct.side_effect = stripe_module.error.SignatureVerificationError(
+            "Invalid signature", None
+        )
+        response = self.client.post(
+            self.webhook_url,
+            data='{}', content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="bad_sig",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    @patch("payments.webhooks.stripe.Webhook.construct_event")
+    def test_invalid_payload_returns_400(self, mock_construct):
+        """When construct_event raises ValueError, the endpoint returns 400."""
+        mock_construct.side_effect = ValueError("Invalid payload")
+        response = self.client.post(
+            self.webhook_url,
+            data='garbage', content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="sig",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_missing_webhook_secret_returns_500(self):
+        """When STRIPE_WEBHOOK_SECRET is empty, the endpoint returns 500."""
+        with self.settings(STRIPE_WEBHOOK_SECRET=""):
+            response = self.client.post(
+                self.webhook_url,
+                data='{}', content_type="application/json",
+                HTTP_STRIPE_SIGNATURE="sig",
+            )
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"not configured", response.content)
+
+    @patch("payments.webhooks.stripe.Webhook.construct_event")
+    def test_unknown_booking_id_returns_404(self, mock_construct):
+        """A checkout.session.completed event with a non-existent
+        booking_id returns 404."""
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "id": "cs_test_unknown",
+                    "metadata": {"booking_id": "9999"},
+                    "payment_intent": "pi_test_unknown",
+                }
+            },
+        }
+        response = self.client.post(
+            self.webhook_url,
+            data='{}', content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="sig",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    @patch("payments.webhooks.stripe.Webhook.construct_event")
+    def test_unhandled_event_type_returns_200(self, mock_construct):
+        """An event type that is not handled returns 200 and is
+        silently ignored."""
+        mock_construct.return_value = {
+            "type": "payment_intent.succeeded",
+            "data": {"object": {"id": "pi_test_unhandled"}},
+        }
+        response = self.client.post(
+            self.webhook_url,
+            data='{}', content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="sig",
+        )
+        self.assertEqual(response.status_code, 200)

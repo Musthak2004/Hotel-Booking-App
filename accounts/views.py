@@ -1,9 +1,11 @@
+from django.contrib import messages
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, TemplateView
+from django.views.generic import CreateView, TemplateView, ListView
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
 from .forms import CustomUserRegistrationForm, CustomUserUpdateForm, ProfileUpdateForm
-from .models import Profile
+from .models import Profile, CustomUser
 
 class SignUpView(CreateView):
     form_class = CustomUserRegistrationForm
@@ -27,6 +29,7 @@ def profile_update(request):
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
+            messages.success(request, "Profile updated successfully!")
             return redirect("home")
     else:
         user_form = CustomUserUpdateForm(instance=request.user)
@@ -37,3 +40,17 @@ def profile_update(request):
         "profile_form": profile_form,
     }
     return render(request, "registration/profile_update.html", context)
+
+
+class SavedHotelsListView(LoginRequiredMixin, ListView):
+    """Display the user's saved hotels."""
+    template_name = "accounts/wishlist.html"
+    context_object_name = "hotels"
+
+    def get_queryset(self):
+        return self.request.user.saved_hotels.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["wishlist_count"] = self.get_queryset().count()
+        return context

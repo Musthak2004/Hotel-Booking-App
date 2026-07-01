@@ -8,3 +8,5 @@ dj-database-url==2.3.0
 psycopg2-binary==2.9.10
 django-cloudinary-storage==0.3.0
 cloudinary==1.44.2
+stripe>=18.0.0
+djangorestframework>=3.17.1

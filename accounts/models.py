@@ -22,8 +22,18 @@ class CustomUser(AbstractUser):
         default="customer"
     )
 
+    saved_hotels = models.ManyToManyField(
+        "hotels.Hotel",
+        blank=True,
+        related_name="saved_by"
+    )
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
+
+    def has_saved_hotel(self, hotel):
+        """Check if user has saved a specific hotel."""
+        return self.saved_hotels.filter(pk=hotel.pk).exists()
 
     def __str__(self):
         return self.email
