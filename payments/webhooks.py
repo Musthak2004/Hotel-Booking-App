@@ -4,18 +4,28 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-import stripe
-
 from bookings.models import Booking
 from .models import Payment
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+
+def _get_stripe():
+    """Lazy-load stripe so a missing package doesn't crash unrelated pages."""
+    try:
+        import stripe as _s
+        _s.api_key = settings.STRIPE_SECRET_KEY
+        return _s
+    except ImportError:
+        return None
 
 
 @require_POST
 @csrf_exempt
 def stripe_webhook(request):
     """Handle incoming Stripe webhook events."""
+    stripe = _get_stripe()
+    if stripe is None:
+        return HttpResponse("Stripe package not installed", status=500)
+
     payload = request.body
     sig_header = request.META.get("HTTP_STRIPE_SIGNATURE", "")
 
@@ -26,7 +36,9 @@ def stripe_webhook(request):
         event = stripe.Webhook.construct_event(
             payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
         )
-    except (ValueError, stripe.error.SignatureVerificationError):
+    except ValueError:
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError:
         return HttpResponse(status=400)
 
     if event["type"] == "checkout.session.completed":
