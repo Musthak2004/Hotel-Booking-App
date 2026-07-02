@@ -47,5 +47,7 @@ urlpatterns = [
     path("api/", include("api.urls")),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# ✅ Serve uploaded media files in all environments.
+# Note: for high-traffic production, configure your web server
+# to serve /media/ directly instead of relying on Django.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
