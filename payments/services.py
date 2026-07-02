@@ -1,12 +1,26 @@
-import stripe
 from django.conf import settings
 from django.urls import reverse
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+
+def _get_stripe():
+    """Lazy-load stripe so a missing package doesn't crash unrelated pages."""
+    try:
+        import stripe as _s
+        _s.api_key = settings.STRIPE_SECRET_KEY
+        return _s
+    except ImportError:
+        return None
 
 
 def create_checkout_session(booking, request):
     """Create a Stripe Checkout Session for the given booking."""
+    stripe = _get_stripe()
+    if stripe is None:
+        raise ImportError(
+            "Stripe package is not installed. "
+            "Install it with: pip install stripe"
+        )
+
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
         line_items=[

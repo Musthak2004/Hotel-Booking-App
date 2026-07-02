@@ -349,6 +349,24 @@ class PaymentDetailViewTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+class FakeStripeError(Exception):
+    """Fake base for stripe.error.StripeError (stripe not installed locally)."""
+    pass
+
+
+class FakeSignatureVerificationError(FakeStripeError):
+    """Fake stripe.error.SignatureVerificationError."""
+    pass
+
+
+def _mock_stripe():
+    """Return a MagicMock configured as a fake stripe module."""
+    sm = MagicMock()
+    sm.Webhook.construct_event.return_value = MagicMock()
+    sm.error.SignatureVerificationError = FakeSignatureVerificationError
+    return sm
+
+
 @override_settings(STRIPE_WEBHOOK_SECRET="whsec_test")
 class StripeWebhookTests(TestCase):
     """Tests for the Stripe webhook endpoint."""
@@ -376,11 +394,13 @@ class StripeWebhookTests(TestCase):
         )
         self.webhook_url = reverse("payments:stripe_webhook")
 
-    @patch("payments.webhooks.stripe.Webhook.construct_event")
-    def test_valid_checkout_session_creates_payment_and_confirms_booking(self, mock_construct):
+    @patch("payments.webhooks._get_stripe")
+    def test_valid_checkout_session_creates_payment_and_confirms_booking(self, mock_get_stripe):
         """A valid checkout.session.completed event creates a Payment
         and sets booking.status = 'confirmed'."""
-        mock_construct.return_value = {
+        stripe_mock = _mock_stripe()
+        mock_get_stripe.return_value = stripe_mock
+        stripe_mock.Webhook.construct_event.return_value = {
             "type": "checkout.session.completed",
             "data": {
                 "object": {
@@ -405,9 +425,11 @@ class StripeWebhookTests(TestCase):
         self.assertEqual(payment.transaction_id, "pi_test_valid")
         self.assertEqual(payment.amount, 600)
 
-    @patch("payments.webhooks.stripe.Webhook.construct_event")
-    def test_duplicate_webhook_is_idempotent(self, mock_construct):
+    @patch("payments.webhooks._get_stripe")
+    def test_duplicate_webhook_is_idempotent(self, mock_get_stripe):
         """A second webhook with the same session ID should not error."""
+        stripe_mock = _mock_stripe()
+        mock_get_stripe.return_value = stripe_mock
         event_data = {
             "type": "checkout.session.completed",
             "data": {
@@ -418,7 +440,7 @@ class StripeWebhookTests(TestCase):
                 }
             },
         }
-        mock_construct.return_value = event_data
+        stripe_mock.Webhook.construct_event.return_value = event_data
 
         # First call
         self.client.post(
@@ -429,7 +451,7 @@ class StripeWebhookTests(TestCase):
         self.assertEqual(Payment.objects.filter(booking=self.booking).count(), 1)
 
         # Second call (duplicate)
-        mock_construct.return_value = event_data
+        stripe_mock.Webhook.construct_event.return_value = event_data
         response2 = self.client.post(
             self.webhook_url,
             data='{}', content_type="application/json",
@@ -442,12 +464,13 @@ class StripeWebhookTests(TestCase):
         self.booking.refresh_from_db()
         self.assertEqual(self.booking.status, "confirmed")
 
-    @patch("payments.webhooks.stripe.Webhook.construct_event")
-    def test_invalid_signature_returns_400(self, mock_construct):
+    @patch("payments.webhooks._get_stripe")
+    def test_invalid_signature_returns_400(self, mock_get_stripe):
         """When construct_event raises SignatureVerificationError,
         the endpoint returns 400."""
-        import stripe as stripe_module
-        mock_construct.side_effect = stripe_module.error.SignatureVerificationError(
+        stripe_mock = _mock_stripe()
+        mock_get_stripe.return_value = stripe_mock
+        stripe_mock.Webhook.construct_event.side_effect = FakeSignatureVerificationError(
             "Invalid signature", None
         )
         response = self.client.post(
@@ -457,10 +480,12 @@ class StripeWebhookTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    @patch("payments.webhooks.stripe.Webhook.construct_event")
-    def test_invalid_payload_returns_400(self, mock_construct):
+    @patch("payments.webhooks._get_stripe")
+    def test_invalid_payload_returns_400(self, mock_get_stripe):
         """When construct_event raises ValueError, the endpoint returns 400."""
-        mock_construct.side_effect = ValueError("Invalid payload")
+        stripe_mock = _mock_stripe()
+        mock_get_stripe.return_value = stripe_mock
+        stripe_mock.Webhook.construct_event.side_effect = ValueError("Invalid payload")
         response = self.client.post(
             self.webhook_url,
             data='garbage', content_type="application/json",
@@ -479,11 +504,13 @@ class StripeWebhookTests(TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertIn(b"not configured", response.content)
 
-    @patch("payments.webhooks.stripe.Webhook.construct_event")
-    def test_unknown_booking_id_returns_404(self, mock_construct):
+    @patch("payments.webhooks._get_stripe")
+    def test_unknown_booking_id_returns_404(self, mock_get_stripe):
         """A checkout.session.completed event with a non-existent
         booking_id returns 404."""
-        mock_construct.return_value = {
+        stripe_mock = _mock_stripe()
+        mock_get_stripe.return_value = stripe_mock
+        stripe_mock.Webhook.construct_event.return_value = {
             "type": "checkout.session.completed",
             "data": {
                 "object": {
@@ -500,11 +527,13 @@ class StripeWebhookTests(TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
-    @patch("payments.webhooks.stripe.Webhook.construct_event")
-    def test_unhandled_event_type_returns_200(self, mock_construct):
+    @patch("payments.webhooks._get_stripe")
+    def test_unhandled_event_type_returns_200(self, mock_get_stripe):
         """An event type that is not handled returns 200 and is
         silently ignored."""
-        mock_construct.return_value = {
+        stripe_mock = _mock_stripe()
+        mock_get_stripe.return_value = stripe_mock
+        stripe_mock.Webhook.construct_event.return_value = {
             "type": "payment_intent.succeeded",
             "data": {"object": {"id": "pi_test_unhandled"}},
         }
